@@ -1,0 +1,179 @@
+import numpy as np
+import pytensor.tensor as pt
+
+from distributions import Continuous
+from internal.helper import all_not_none, eps, from_precision, ppf_bounds_cont, to_precision
+
+
+
+class Normal(Continuous):
+    r"""
+    Normal distribution.
+
+    The pdf of this distribution is
+
+    .. math::
+
+       f(x \mid \mu, \sigma) =
+           \frac{1}{\sigma \sqrt{2\pi}}
+           \exp\left\{ -\frac{1}{2} \left(\frac{x-\mu}{\sigma}\right)^2 \right\}
+
+    .. plot::
+        :context: close-figs
+
+
+        from preliz import Normal, style
+        style.use('preliz-doc')
+        mus = [0., 0., -2.]
+        sigmas = [1, 0.5, 1]
+        for mu, sigma in zip(mus, sigmas):
+            Normal(mu, sigma).plot_pdf()
+
+    ========  ==========================================
+    Support   :math:`x \in \mathbb{R}`
+    Mean      :math:`\mu`
+    Variance  :math:`\sigma^2`
+    ========  ==========================================
+
+    Normal distribution has 2 alternative parameterizations. In terms of mean and
+    sigma (standard deviation), or mean and tau (precision).
+
+    The link between the 2 alternatives is given by
+
+    .. math::
+
+        \tau = \frac{1}{\sigma^2}
+
+    Parameters
+    ----------
+    mu : float
+        Mean.
+    sigma : float
+        Standard deviation (sigma > 0).
+    tau : float
+        Precision (tau > 0).
+    """
+
+    def __init__(self, mu=None, sigma=None, tau=None):
+        super().__init__()
+        self.support = (-np.inf, np.inf)
+        self._parametrization(mu, sigma, tau)
+
+    def _parametrization(self, mu=None, sigma=None, tau=None):
+        if all_not_none(sigma, tau):
+            raise ValueError(
+                "Incompatible parametrization. Either use mu and sigma, or mu and tau."
+            )
+
+        names = ("mu", "sigma")
+        self.params_support = ((-np.inf, np.inf), (eps, np.inf))
+
+        if tau is not None:
+            self.tau = tau
+            sigma = from_precision(tau)
+            names = ("mu", "tau")
+
+        self.mu = mu
+        self.sigma = sigma
+        self.param_names = names
+        if all_not_none(mu, sigma):
+            self._update(mu, sigma)
+
+    def _update(self, mu, sigma):
+        self.mu = np.float64(mu)
+        self.sigma = np.float64(sigma)
+        self.tau = to_precision(sigma)
+
+        if self.param_names[1] == "sigma":
+            self.params = (self.mu, self.sigma)
+        elif self.param_names[1] == "tau":
+            self.params = (self.mu, self.tau)
+
+        self.is_frozen = True
+
+    def pdf(self, x):
+        x = np.asarray(x)
+        return nb_pdf(x, self.mu, self.sigma)
+
+    def cdf(self, x):
+        x = np.asarray(x)
+        return nb_cdf(x, self.mu, self.sigma)
+
+    def ppf(self, q):
+        q = np.asarray(q)
+        return nb_ppf(q, self.mu, self.sigma)
+
+    def logpdf(self, x):
+        return nb_logpdf(x, self.mu, self.sigma)
+
+    def _neg_logpdf(self, x):
+        return nb_neg_logpdf(x, self.mu, self.sigma)
+
+    def entropy(self):
+        return nb_entropy(self.sigma)
+
+    def mean(self):
+        return self.mu
+
+    def mode(self):
+        return self.mu
+
+    def median(self):
+        return self.mu
+
+    def var(self):
+        return self.sigma**2
+
+    def std(self):
+        return self.sigma
+
+    def skewness(self):
+        return 0
+
+    def kurtosis(self):
+        return 0
+
+    def rvs(self, size=None, random_state=None):
+        random_state = np.random.default_rng(random_state)
+        return random_state.normal(self.mu, self.sigma, size)
+
+    def _fit_moments(self, mean, sigma):
+        self._update(mean, sigma)
+
+    def _fit_mle(self, sample):
+        self._update(*nb_fit_mle(sample))
+
+
+
+def nb_cdf(x, mu, sigma):
+    return 0.5 * (1 + pt.erf((x - mu) / (sigma * 2**0.5)))
+
+
+
+def nb_ppf(q, mu, sigma):
+    return ppf_bounds_cont(mu + sigma * 2**0.5 * pt.erfinv(2 * q - 1), q, -pt.inf, pt.inf)
+
+
+   
+def nb_pdf(x, mu, sigma):
+    return 1 / pt.sqrt(2 * pt.pi * sigma**2) * pt.exp(-0.5 * ((x - mu) / sigma) ** 2)
+
+
+
+def nb_entropy(sigma):
+    return 0.5 * (pt.log(2 * pt.pi * pt.e * sigma**2))
+
+
+
+def nb_fit_mle(sample):
+    return mean_and_std(sample)
+
+
+
+def nb_logpdf(x, mu, sigma):
+    return -pt.log(sigma) - 0.5 * pt.log(2 * pt.pi) - 0.5 * ((x - mu) / sigma) ** 2
+
+
+
+def nb_neg_logpdf(x, mu, sigma):
+    return -(nb_logpdf(x, mu, sigma)).sum()
