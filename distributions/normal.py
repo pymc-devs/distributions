@@ -1,4 +1,3 @@
-import numpy as np
 import pytensor.tensor as pt
 
 from .helper import ppf_bounds_cont
@@ -66,7 +65,7 @@ def logcdf(x, mu, sigma):
     )
 
 def logpdf(x, mu, sigma):
-    return -0.5 * pt.pow((x - mu) / sigma, 2) - pt.log(pt.sqrt(2.0 * np.pi)) - pt.log(sigma)
+    return -0.5 * pt.pow((x - mu) / sigma, 2) - pt.log(pt.sqrt(2.0 * pt.pi)) - pt.log(sigma)
 
 def logsf(x, mu, sigma):
     return logcdf(-x, -mu, sigma)
