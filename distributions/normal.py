@@ -5,23 +5,23 @@ from .helper import ppf_bounds_cont
 
 def mean(mu, sigma):
     shape = pt.broadcast_arrays(mu, sigma)[0]
-    return pt.full(shape, mu)
+    return pt.full_like(shape, mu)
 
 def mode(mu, sigma):
     shape = pt.broadcast_arrays(mu, sigma)[0]
-    return pt.full(shape, mu)
+    return pt.full_like(shape, mu)
 
 def median(mu, sigma):
     shape = pt.broadcast_arrays(mu, sigma)[0]
-    return pt.full(shape, mu)
+    return pt.full_like(shape, mu)
 
 def var(mu, sigma):
     shape = pt.broadcast_arrays(mu, sigma)[0]
-    return pt.full(shape, pt.square(sigma))
+    return pt.full_like(shape, pt.square(sigma))
 
 def std(mu, sigma):
     shape = pt.broadcast_arrays(mu, sigma)[0]
-    return pt.full(shape, sigma)
+    return pt.full_like(shape, sigma)
 
 def skewness(mu, sigma):
     shape = pt.broadcast_arrays(mu, sigma)[0]
@@ -33,7 +33,7 @@ def kurtosis(mu, sigma):
 
 def entropy(mu, sigma):
     shape = pt.broadcast_arrays(mu, sigma)[0]
-    return pt.full(shape, 0.5 * (pt.log(2 * pt.pi * pt.e * sigma**2)))
+    return pt.full_like(shape, 0.5 * (pt.log(2 * pt.pi * pt.e * sigma**2)))
 
 def cdf(x, mu, sigma):
     return 0.5 * (1 + pt.erf((x - mu) / (sigma * 2**0.5)))
