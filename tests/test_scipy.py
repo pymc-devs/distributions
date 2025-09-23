@@ -80,11 +80,6 @@ def test_match_scipy(p_dist, sp_dist, p_params, sp_params, support):
     expected_isf = scipy_dist.isf(x_vals)
     assert_almost_equal(actual_isf, expected_isf)
 
-    # Neg logPDF
-    actual_neg_logpdf = p_dist.neg_logpdf(extended_vals, *p_params).eval()
-    expected_neg_logpdf = -expected_logpdf.sum()
-    assert_almost_equal(actual_neg_logpdf, expected_neg_logpdf)
-
     # mean
     mean = p_dist.mean(*p_params).eval()
     expected_mean = scipy_dist.mean()
@@ -101,7 +96,6 @@ def test_match_scipy(p_dist, sp_dist, p_params, sp_params, support):
     actual_mode = p_dist.mode(*p_params).eval()
     assert_almost_equal(actual_mode, expected_mode, decimal=0)
 
-
     # standard deviation   
     std = p_dist.std(*p_params).eval()
     expected_std = scipy_dist.std()
@@ -117,7 +111,7 @@ def test_match_scipy(p_dist, sp_dist, p_params, sp_params, support):
     expected_skewness = scipy_dist.stats(moments="s")
     assert_almost_equal(skewness, expected_skewness)
 
-
+    # kurtosis
     kurtosis = p_dist.kurtosis(*p_params).eval()
     expected_kurtosis = scipy_dist.stats(moments="k")
     assert_almost_equal(kurtosis, expected_kurtosis)

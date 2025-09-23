@@ -4,35 +4,35 @@ from .helper import ppf_bounds_cont
 
 
 def mean(mu, sigma):
-    shape = pt.broadcast_shape(mu, sigma)
+    shape = pt.broadcast_arrays(mu, sigma)[0]
     return pt.full(shape, mu)
 
 def mode(mu, sigma):
-    shape = pt.broadcast_shape(mu, sigma)
+    shape = pt.broadcast_arrays(mu, sigma)[0]
     return pt.full(shape, mu)
 
 def median(mu, sigma):
-    shape = pt.broadcast_shape(mu, sigma)
+    shape = pt.broadcast_arrays(mu, sigma)[0]
     return pt.full(shape, mu)
 
 def var(mu, sigma):
-    shape = pt.broadcast_shape(mu, sigma)
+    shape = pt.broadcast_arrays(mu, sigma)[0]
     return pt.full(shape, pt.square(sigma))
 
 def std(mu, sigma):
-    shape = pt.broadcast_shape(mu, sigma)
+    shape = pt.broadcast_arrays(mu, sigma)[0]
     return pt.full(shape, sigma)
 
 def skewness(mu, sigma):
-    shape = pt.broadcast_shape(mu, sigma)
-    return pt.full(shape, 0)
+    shape = pt.broadcast_arrays(mu, sigma)[0]
+    return pt.full_like(shape, 0)
 
 def kurtosis(mu, sigma):
-    shape = pt.broadcast_shape(mu, sigma)
-    return pt.full(shape, 0)
+    shape = pt.broadcast_arrays(mu, sigma)[0]
+    return pt.full_like(shape, 0)
 
 def entropy(mu, sigma):
-    shape = pt.broadcast_shape(mu, sigma)
+    shape = pt.broadcast_arrays(mu, sigma)[0]
     return pt.full(shape, 0.5 * (pt.log(2 * pt.pi * pt.e * sigma**2)))
 
 def cdf(x, mu, sigma):
@@ -52,9 +52,7 @@ def sf(x, mu, sigma):
 
 
 def rvs(mu, sigma, rng=None, size=None):
-    if size is None:
-        size = pt.broadcast_shape(mu, sigma)
-    return mu + pt.random.normal(rng=rng, size=size) * sigma
+    return pt.random.normal(mu, sigma, rng=rng, size=size)
 
 def logcdf(x, mu, sigma):
     z = (x - mu) / sigma
@@ -69,7 +67,3 @@ def logpdf(x, mu, sigma):
 
 def logsf(x, mu, sigma):
     return logcdf(-x, -mu, sigma)
-
-def neg_logpdf(x, mu, sigma):
-    return -(logpdf(x, mu, sigma)).sum()
-
