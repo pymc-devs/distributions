@@ -50,9 +50,8 @@ def ppf(q, mu, sigma):
 def sf(x, mu, sigma):
     return pt.exp(logsf(x, mu, sigma))
 
-
-def rvs(mu, sigma, rng=None, size=None):
-    return pt.random.normal(mu, sigma, rng=rng, size=size)
+def rvs(mu, sigma, size=None, random_state=None):
+     return pt.random.normal(mu, sigma, rng=random_state, size=size)
 
 def logcdf(x, mu, sigma):
     z = (x - mu) / sigma
