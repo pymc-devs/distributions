@@ -25,11 +25,11 @@ def std(mu, sigma):
 
 def skewness(mu, sigma):
     shape = pt.broadcast_arrays(mu, sigma)[0]
-    return pt.full_like(shape, 0)
+    return pt.full_like(shape, 0.0)
 
 def kurtosis(mu, sigma):
     shape = pt.broadcast_arrays(mu, sigma)[0]
-    return pt.full_like(shape, 0)
+    return pt.full_like(shape, 0.0)
 
 def entropy(mu, sigma):
     shape = pt.broadcast_arrays(mu, sigma)[0]
