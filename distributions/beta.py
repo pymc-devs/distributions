@@ -12,7 +12,6 @@ def mode(alpha, beta):
     alpha_b, beta_b = pt.broadcast_arrays(alpha, beta)
     result = pt.full_like(alpha_b, pt.nan)
 
-    result = pt.where(pt.equal(alpha_b, 1) & pt.equal(beta_b, 1), 0.5, result)
     result = pt.where(pt.equal(alpha_b, 1) & (beta_b > 1), 0.0, result)
     result = pt.where(pt.equal(beta_b, 1) & (alpha_b > 1), 1.0, result)
     result = pt.where((alpha_b > 1) & (beta_b > 1),

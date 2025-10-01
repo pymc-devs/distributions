@@ -5,6 +5,7 @@ from numpy.testing import assert_almost_equal
 from scipy import stats
 
 from distributions import beta as Beta
+from distributions import betascaled as BetaScaled
 from distributions import normal as Normal
 
 
@@ -13,6 +14,7 @@ from distributions import normal as Normal
     "p_dist, sp_dist, p_params, sp_params, support",
     [
     (Beta, stats.beta, (pt.constant(2.), pt.constant(5.)), (2, 5), (0, 1)),
+    (BetaScaled, stats.beta, (pt.constant(2.), pt.constant(5.), pt.constant(-1.), pt.constant(3.)), (2, 5, -1, 4), (-1, 3)),
     (Normal, stats.norm, (pt.constant(0.), pt.constant(2.)), (0, 2), (-np.inf, np.inf)),
     ],
 )
