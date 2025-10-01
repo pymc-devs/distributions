@@ -4,13 +4,16 @@ import pytest
 from numpy.testing import assert_almost_equal
 from scipy import stats
 
+from distributions import beta as Beta
 from distributions import normal as Normal
+
 
 
 @pytest.mark.parametrize(
     "p_dist, sp_dist, p_params, sp_params, support",
     [
-    (Normal, stats.norm, (pt.constant(0), pt.constant(2)), (0, 2), (-np.inf, np.inf)),
+    (Beta, stats.beta, (pt.constant(2.), pt.constant(5.)), (2, 5), (0, 1)),
+    (Normal, stats.norm, (pt.constant(0.), pt.constant(2.)), (0, 2), (-np.inf, np.inf)),
     ],
 )
 def test_match_scipy(p_dist, sp_dist, p_params, sp_params, support):
@@ -23,7 +26,7 @@ def test_match_scipy(p_dist, sp_dist, p_params, sp_params, support):
 
     # Random variates
     rng = pt.random.default_rng(1)
-    actual_rvs = p_dist.rvs(*p_params, size=20, rng=rng).eval()
+    actual_rvs = p_dist.rvs(*p_params, size=20, random_state=rng).eval()
     rng = np.random.default_rng(1)
     expected_rvs = scipy_dist.rvs(20, random_state=rng)
     assert_almost_equal(actual_rvs, expected_rvs)
