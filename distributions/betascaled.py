@@ -134,3 +134,21 @@ def logsf(x, alpha, beta, lower, upper):
             pt.log(pt.betainc(beta, alpha, 1 - x_normalized))
         )
     )
+
+
+def from_mu_sigma(mu, sigma):
+    nu = mu * (1 - mu) / sigma**2 - 1
+    alpha = mu * nu
+    beta = (1 - mu) * nu
+    return alpha, beta
+
+def from_mu_nu(mu, nu):
+    alpha = mu * nu
+    beta = (1 - mu) * nu
+    return alpha, beta
+
+def to_mu_sigma(alpha, beta):
+    alpha_plus_beta = alpha + beta
+    mu = alpha / alpha_plus_beta
+    sigma = (alpha * beta) ** 0.5 / alpha_plus_beta / (alpha_plus_beta + 1) ** 0.5
+    return mu, sigma
