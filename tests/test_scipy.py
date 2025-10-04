@@ -191,29 +191,21 @@ def test_match_scipy(name, p_dist, sp_dist, p_params, sp_params, support):
 
     # PPF
     x_vals = np.array([-1, 0, 0.25, 0.5, 0.75, 1, 2])
-    if name in ["skewnormal"]:
-        # ppf method is not implemented yet
-        pass
-    else:
-        actual_ppf = p_dist.ppf(x_vals, *p_params).eval()
-        expected_ppf = scipy_dist.ppf(x_vals)
+    actual_ppf = p_dist.ppf(x_vals, *p_params).eval()
+    expected_ppf = scipy_dist.ppf(x_vals)
 
-        if name in ["halfstudent0"]:
-            assert_almost_equal(actual_ppf, expected_ppf, decimal=2)
-        else:
-            assert_almost_equal(actual_ppf, expected_ppf)
+    if name in ["halfstudent0", "skewnormal"]:
+        assert_almost_equal(actual_ppf, expected_ppf, decimal=2)
+    else:
+        assert_almost_equal(actual_ppf, expected_ppf)
 
     # ISF
-    if name in ["skewnormal"]:
-        # isf method is not implemented yet
-        pass
+    actual_isf = p_dist.isf(x_vals, *p_params).eval()
+    expected_isf = scipy_dist.isf(x_vals)
+    if name in ["halfstudent0", "skewnormal"]:
+        assert_almost_equal(actual_isf, expected_isf, decimal=2)
     else:
-        actual_isf = p_dist.isf(x_vals, *p_params).eval()
-        expected_isf = scipy_dist.isf(x_vals)
-        if name in ["halfstudent0"]:
-            assert_almost_equal(actual_isf, expected_isf, decimal=2)
-        else:
-            assert_almost_equal(actual_isf, expected_isf)
+        assert_almost_equal(actual_isf, expected_isf)
 
     # mean
     mean = p_dist.mean(*p_params).eval()
@@ -221,17 +213,13 @@ def test_match_scipy(name, p_dist, sp_dist, p_params, sp_params, support):
     assert_almost_equal(mean, expected_mean)
 
     # median
-    if name in ["skewnormal"]:
-        # ppf method is not implemented yet
-        pass
-    else:
-        median = p_dist.median(*p_params).eval()
-        expected_median = scipy_dist.median()
+    median = p_dist.median(*p_params).eval()
+    expected_median = scipy_dist.median()
 
-        if name in ["halfstudent0", "halfstudent1"]:
-            assert_almost_equal(median, expected_median, decimal=2)
-        else:
-            assert_almost_equal(median, expected_median)
+    if name in ["halfstudent0", "halfstudent1", "skewnormal"]:
+        assert_almost_equal(median, expected_median, decimal=2)
+    else:
+        assert_almost_equal(median, expected_median)
 
     # mode
     finite_expected_pdf = np.where(np.isfinite(expected_pdf), expected_pdf, -np.inf)
