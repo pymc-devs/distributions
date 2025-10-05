@@ -76,8 +76,7 @@ def pdf(x, mu, sigma, alpha):
 def ppf(q, mu, sigma, alpha):
     mu_b, sigma_b, alpha_b = pt.broadcast_arrays(mu, sigma, alpha)
     params = (mu_b, sigma_b, alpha_b)
-    result = find_ppf(q, params, -pt.inf, pt.inf, cdf)
-    return ppf_bounds_cont(result, q, -pt.inf, pt.inf)
+    return find_ppf(q, -pt.inf, pt.inf, cdf, *params)
 
 
 def sf(x, mu, sigma, alpha):
