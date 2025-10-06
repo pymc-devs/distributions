@@ -5,6 +5,7 @@ from .optimization import find_ppf
 from .halfnormal import entropy as halfnormal_entropy
 from .normal import entropy as normal_entropy
 
+
 def mean(mu, sigma, alpha):
     mu_b, sigma_b, alpha_b = pt.broadcast_arrays(mu, sigma, alpha)
     return mu_b + sigma_b * pt.sqrt(2 / pt.pi) * alpha_b / pt.sqrt(1 + alpha_b**2)
@@ -76,7 +77,8 @@ def ppf(q, mu, sigma, alpha):
     mu_b, sigma_b, alpha_b = pt.broadcast_arrays(mu, sigma, alpha)
     params = (mu_b, sigma_b, alpha_b)
     result = find_ppf(q, params, -pt.inf, pt.inf, cdf)
-    return ppf_bounds_cont(result, q, -pt.inf, pt.inf) 
+    return ppf_bounds_cont(result, q, -pt.inf, pt.inf)
+
 
 def sf(x, mu, sigma, alpha):
     return 1 - cdf(x, mu, sigma, alpha)
