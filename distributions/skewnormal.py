@@ -1,12 +1,9 @@
 import pytensor.tensor as pt
 
 from .helper import ppf_bounds_cont
+from .optimization import find_ppf
 from .halfnormal import entropy as halfnormal_entropy
 from .normal import entropy as normal_entropy
-from .normal import ppf as normal_ppf
-from .halfnormal import ppf as halfnormal_ppf
-from pytensor.ifelse import ifelse
-
 
 def mean(mu, sigma, alpha):
     mu_b, sigma_b, alpha_b = pt.broadcast_arrays(mu, sigma, alpha)
@@ -69,7 +66,6 @@ def logcdf(x, mu, sigma, alpha):
 
 def isf(x, mu, sigma, alpha):
     return ppf(1 - x, mu, sigma, alpha)
-    # raise NotImplementedError("ISF for skewnormal is not implemented yet.")
 
 
 def pdf(x, mu, sigma, alpha):
@@ -77,24 +73,10 @@ def pdf(x, mu, sigma, alpha):
 
 
 def ppf(q, mu, sigma, alpha):
-    # The inverse of the cdf has no closed-form, usually it is computed using a root-finding method
-    # Here we use the Cornish-Fisher expansion
-    z_q = normal_ppf(q, 0, 1)
-    mu_z = mean(0, 1, alpha)
-    sigma_z = std(0, 1, alpha)
-    gamma1 = skewness(0, 1, alpha)
-    gamma2 = kurtosis(0, 1, alpha)
-
-    z_skew = (
-        z_q
-        + (z_q**2 - 1) * gamma1 / 6
-        + (z_q**3 - 3 * z_q) * gamma2 / 24
-        - (2 * z_q**3 - 5 * z_q) * gamma1**2 / 36
-    )
-
-    result = mu + sigma * (mu_z + sigma_z * z_skew)
-    return ppf_bounds_cont(result, q, -pt.inf, pt.inf)
-
+    mu_b, sigma_b, alpha_b = pt.broadcast_arrays(mu, sigma, alpha)
+    params = (mu_b, sigma_b, alpha_b)
+    result = find_ppf(q, params, -pt.inf, pt.inf, cdf)
+    return ppf_bounds_cont(result, q, -pt.inf, pt.inf) 
 
 def sf(x, mu, sigma, alpha):
     return 1 - cdf(x, mu, sigma, alpha)
@@ -102,8 +84,8 @@ def sf(x, mu, sigma, alpha):
 
 def rvs(mu, sigma, alpha, size=None, random_state=None):
     mu_b, sigma_b, alpha_b = pt.broadcast_arrays(mu, sigma, alpha)
-    u_0 = pt.random.normal(0, 1, rng=random_state, size=size)
-    v = pt.random.normal(0, 1, rng=random_state, size=size)
+    next_rng, u_0 = pt.random.normal(0, 1, rng=random_state, size=size).owner.outputs
+    v = pt.random.normal(0, 1, rng=next_rng, size=size)
     d = alpha_b / pt.sqrt(1 + alpha_b**2)
     u_1 = d * u_0 + v * pt.sqrt(1 - d**2)
     return pt.sign(u_0) * u_1 * sigma_b + mu_b

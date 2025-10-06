@@ -117,11 +117,7 @@ def test_match_scipy(name, p_dist, sp_dist, p_params, sp_params, support):
             np.quantile(p_rvs, [0.25, 0.5, 0.75]), np.quantile(s_rvs, [0.25, 0.5, 0.75]), decimal=1
         )
     elif name in ["skewnormal"]:
-        p_rvs = p_dist.rvs(*p_params, size=20_000).eval()
-        s_rvs = scipy_dist.rvs(20_000)
-        assert_almost_equal(
-            np.quantile(p_rvs, [0.25, 0.5, 0.75]), np.quantile(s_rvs, [0.25, 0.5, 0.75]), decimal=1
-        )
+        assert_almost_equal(actual_rvs, expected_rvs, decimal=6)
     else:
         assert_almost_equal(actual_rvs, expected_rvs)
 
@@ -194,7 +190,7 @@ def test_match_scipy(name, p_dist, sp_dist, p_params, sp_params, support):
     actual_ppf = p_dist.ppf(x_vals, *p_params).eval()
     expected_ppf = scipy_dist.ppf(x_vals)
 
-    if name in ["halfstudent0", "skewnormal"]:
+    if name in ["halfstudent0"]:
         assert_almost_equal(actual_ppf, expected_ppf, decimal=2)
     else:
         assert_almost_equal(actual_ppf, expected_ppf)
