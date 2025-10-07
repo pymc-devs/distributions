@@ -1,6 +1,5 @@
 import pytensor.tensor as pt
 
-from .helper import ppf_bounds_cont
 from .optimization import find_ppf
 from .halfnormal import entropy as halfnormal_entropy
 from .normal import entropy as normal_entropy

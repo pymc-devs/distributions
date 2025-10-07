@@ -106,7 +106,10 @@ def discrete_entropy(min_x, max_x, logpdf, *params):
     -------
     entropy : tensor
     """
-    broadcast_shape = pt.broadcast_arrays(*params)[0]
+    if len(params) == 1:
+        broadcast_shape = pt.as_tensor_variable(params[0])
+    else:
+        broadcast_shape = pt.broadcast_arrays(*params)[0]
 
     k_vals = pt.arange(min_x, max_x)
     k_broadcast = k_vals.reshape((-1,) + (1,) * broadcast_shape.ndim)
@@ -116,3 +119,19 @@ def discrete_entropy(min_x, max_x, logpdf, *params):
     result = pt.sum(-pt.exp(log_probs) * log_probs, axis=0)
 
     return pt.squeeze(result) if broadcast_shape.ndim == 0 else result
+
+
+def from_tau(tau):
+    """
+    Convert precision (tau) to standard deviation (sigma).
+    """
+    sigma = 1 / pt.sqrt(tau)
+    return sigma
+
+
+def to_tau(sigma):
+    """
+    Convert standard deviation (sigma) to precision (tau).
+    """
+    tau = pt.power(sigma, -2)
+    return tau

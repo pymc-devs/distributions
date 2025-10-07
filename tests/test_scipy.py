@@ -7,12 +7,19 @@ from scipy import stats
 from distributions import beta as Beta
 from distributions import betascaled as BetaScaled
 from distributions import cauchy as Cauchy
+from distributions import exponential as Exponential
+from distributions import gamma as Gamma
+from distributions import gumbel as Gumbel
 from distributions import halfcauchy as HalfCauchy
 from distributions import halfnormal as HalfNormal
 from distributions import halfstudentt as HalfStudentT
+from distributions import inversegamma as InverseGamma
+from distributions import logistic as Logistic
+from distributions import lognormal as LogNormal
 from distributions import normal as Normal
 from distributions import skewnormal as SkewNormal
 from distributions import studentt as StudentT
+from distributions import wald as Wald
 from distributions import bernoulli as Bernoulli
 from distributions import binomial as Binomial
 from distributions import negativebinomial as NegativeBinomial
@@ -40,6 +47,30 @@ from distributions import poisson as Poisson
             (-np.inf, np.inf),
         ),
         (
+            "_",
+            Exponential,
+            stats.expon,
+            (pt.constant(1 / 3.7),),
+            {"scale": 3.7},
+            (0, np.inf),
+        ),
+        (
+            "_",
+            Gamma,
+            stats.gamma,
+            (pt.constant(2.0), pt.constant(1 / 3)),
+            {"a": 2.0, "scale": 3.0},
+            (0, np.inf),
+        ),
+        (
+            "_",
+            Gumbel,
+            stats.gumbel_r,
+            (pt.constant(2.5), pt.constant(3.5)),
+            {"loc": 2.5, "scale": 3.5},
+            (-np.inf, np.inf),
+        ),
+        (
             "halfstudent0",
             HalfStudentT,
             stats.halfnorm,
@@ -53,6 +84,30 @@ from distributions import poisson as Poisson
             stats.halfcauchy,
             (pt.constant(1.0), pt.constant(3.5)),
             {"scale": 3.5},
+            (0, np.inf),
+        ),
+        (
+            "inversegamma",
+            InverseGamma,
+            stats.invgamma,
+            (pt.constant(5), pt.constant(2)),
+            {"a": 5, "scale": 2},
+            (0, np.inf),
+        ),
+        (
+            "_",
+            Logistic,
+            stats.logistic,
+            (pt.constant(2.5), pt.constant(4)),
+            {"loc": 2.5, "scale": 4},
+            (-np.inf, np.inf),
+        ),
+        (
+            "_",
+            LogNormal,
+            stats.lognorm,
+            (pt.constant(2.0, dtype="float64"), pt.constant(0.5, dtype="float64")),
+            {"s": 0.5, "loc": 0, "scale": np.exp(2.0)},
             (0, np.inf),
         ),
         (
@@ -77,7 +132,7 @@ from distributions import poisson as Poisson
             stats.halfnorm,
             (pt.constant(2),),
             {"loc": 0, "scale": 2},
-            (-np.inf, np.inf),
+            (0, np.inf),
         ),
         (
             "skewnormal",
@@ -94,6 +149,14 @@ from distributions import poisson as Poisson
             (pt.constant(5), pt.constant(0), pt.constant(2)),
             {"df": 5, "loc": 0, "scale": 2},
             (-np.inf, np.inf),
+        ),
+        (
+            "_",
+            Wald,
+            stats.invgauss,
+            (pt.constant(2.0), pt.constant(10.0)),
+            {"mu": 2 / 10, "scale": 10},
+            (0, np.inf),
         ),
         ("_", Bernoulli, stats.bernoulli, (pt.constant(0.4),), {"p": 0.4}, (0, 1)),
         (
@@ -132,7 +195,7 @@ def test_match_scipy(name, p_dist, sp_dist, p_params, sp_params, support):
     rng_n = np.random.default_rng(1)
     expected_rvs = scipy_dist.rvs(20, random_state=rng_n)
 
-    if name in ["halfstudent0", "halfstudent1"]:
+    if name in ["halfstudent0", "halfstudent1", "inversegamma"]:
         p_rvs = p_dist.rvs(*p_params, size=20_000, random_state=rng_p).eval()
         s_rvs = scipy_dist.rvs(20_000, random_state=rng_n)
         assert_almost_equal(
