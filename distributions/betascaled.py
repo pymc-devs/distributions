@@ -1,4 +1,3 @@
-
 import pytensor.tensor as pt
 from pytensor.tensor.special import betaln
 from pytensor.tensor.xlogx import xlogy0
@@ -15,12 +14,14 @@ def mode(alpha, beta, lower, upper):
     alpha_b, beta_b, lower_b, upper_b = pt.broadcast_arrays(alpha, beta, lower, upper)
     result = pt.full_like(alpha_b, pt.nan)
 
-    result = pt.where((alpha_b < 1) & (beta_b < 1), pt.nan, result)    
+    result = pt.where((alpha_b < 1) & (beta_b < 1), pt.nan, result)
     result = pt.where((alpha_b <= 1) & (beta_b > 1), lower_b, result)
     result = pt.where((beta_b <= 1) & (alpha_b > 1), upper_b, result)
-    result = pt.where((alpha_b > 1) & (beta_b > 1),
-                      lower_b + (alpha_b - 1) / (alpha_b + beta_b - 2) * (upper_b - lower_b),
-                      result)
+    result = pt.where(
+        (alpha_b > 1) & (beta_b > 1),
+        lower_b + (alpha_b - 1) / (alpha_b + beta_b - 2) * (upper_b - lower_b),
+        result,
+    )
     return result
 
 
@@ -29,11 +30,7 @@ def median(alpha, beta, lower, upper):
 
 
 def var(alpha, beta, lower, upper):
-    return (
-        (alpha * beta)
-        / ((alpha + beta) ** 2 * (alpha + beta + 1))
-        * (upper - lower) ** 2
-    )
+    return (alpha * beta) / ((alpha + beta) ** 2 * (alpha + beta + 1)) * (upper - lower) ** 2
 
 
 def std(alpha, beta, lower, upper):
@@ -42,13 +39,12 @@ def std(alpha, beta, lower, upper):
 
 def skewness(alpha, beta, lower, upper):
     alpha_b, beta_b = pt.broadcast_arrays(alpha, beta)
-    
+
     psc = alpha_b + beta_b
     result = pt.where(
-        pt.eq(alpha_b, beta_b), 0.0,
-        (2 * (beta_b - alpha_b) * pt.sqrt(psc + 1)) / (
-            (psc + 2) * pt.sqrt(alpha_b * beta_b)
-        )
+        pt.eq(alpha_b, beta_b),
+        0.0,
+        (2 * (beta_b - alpha_b) * pt.sqrt(psc + 1)) / ((psc + 2) * pt.sqrt(alpha_b * beta_b)),
     )
     return result
 
@@ -57,8 +53,11 @@ def kurtosis(alpha, beta, lower, upper):
     alpha_b, beta_b = pt.broadcast_arrays(alpha, beta)
     psc = alpha_b + beta_b
     prod = alpha_b * beta_b
-    result = (6 * (pt.abs(alpha_b - beta_b) ** 2 * (psc + 1) - prod * (psc + 2))
-    / (prod * (psc + 2) * (psc + 3)))
+    result = (
+        6
+        * (pt.abs(alpha_b - beta_b) ** 2 * (psc + 1) - prod * (psc + 2))
+        / (prod * (psc + 2) * (psc + 3))
+    )
     return result
 
 
@@ -105,11 +104,7 @@ def logcdf(x, alpha, beta, lower, upper):
     return pt.switch(
         pt.lt(x, lower),
         -pt.inf,
-        pt.switch(
-            pt.gt(x, upper),
-            0.0,
-            pt.log(pt.betainc(alpha, beta, x_normalized))
-        )
+        pt.switch(pt.gt(x, upper), 0.0, pt.log(pt.betainc(alpha, beta, x_normalized))),
     )
 
 
@@ -117,9 +112,8 @@ def logpdf(x, alpha, beta, lower, upper):
     return pt.switch(
         pt.bitwise_or(pt.lt(x, lower), pt.gt(x, upper)),
         -pt.inf,
-        (xlogy0((alpha - 1), (x - lower)) + xlogy0((beta - 1), (upper - x))) - (
-             xlogy0((alpha + beta - 1), (upper - lower)) + betaln(alpha, beta)
-        )
+        (xlogy0((alpha - 1), (x - lower)) + xlogy0((beta - 1), (upper - x)))
+        - (xlogy0((alpha + beta - 1), (upper - lower)) + betaln(alpha, beta)),
     )
 
 
@@ -128,11 +122,7 @@ def logsf(x, alpha, beta, lower, upper):
     return pt.switch(
         pt.lt(x, lower),
         0.0,
-        pt.switch(
-            pt.gt(x, upper),
-            -pt.inf,
-            pt.log(pt.betainc(beta, alpha, 1 - x_normalized))
-        )
+        pt.switch(pt.gt(x, upper), -pt.inf, pt.log(pt.betainc(beta, alpha, 1 - x_normalized))),
     )
 
 
@@ -142,10 +132,12 @@ def from_mu_sigma(mu, sigma):
     beta = (1 - mu) * nu
     return alpha, beta
 
+
 def from_mu_nu(mu, nu):
     alpha = mu * nu
     beta = (1 - mu) * nu
     return alpha, beta
+
 
 def to_mu_sigma(alpha, beta):
     alpha_plus_beta = alpha + beta

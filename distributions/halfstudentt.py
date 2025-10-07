@@ -8,7 +8,6 @@ from .halfnormal import cdf as halfnormal_cdf
 from .halfnormal import logcdf as halfnormal_logpdf
 
 
-
 def mean(nu, sigma):
     gamma0 = pt.exp(pt.gammaln((nu + 1) / 2))
     gamma1 = pt.exp(pt.gammaln(nu / 2))

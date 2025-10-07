@@ -46,6 +46,7 @@ def logcdf(x, beta):
         pt.log(2 * pt.arctan(x / beta) / pt.pi),
     )
 
+
 def isf(x, beta):
     return ppf(1 - x, beta)
 
@@ -70,9 +71,7 @@ def rvs(beta, size=None, random_state=None):
 
 def logpdf(x, beta):
     return pt.where(
-        pt.lt(x, 0),
-        -pt.inf,
-        pt.log(2) - pt.log(pt.pi * beta) - pt.log(1 + (x / beta)**2)
+        pt.lt(x, 0), -pt.inf, pt.log(2) - pt.log(pt.pi * beta) - pt.log(1 + (x / beta) ** 2)
     )
 
 

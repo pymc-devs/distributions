@@ -13,6 +13,10 @@ from distributions import halfstudentt as HalfStudentT
 from distributions import normal as Normal
 from distributions import skewnormal as SkewNormal
 from distributions import studentt as StudentT
+from distributions import bernoulli as Bernoulli
+from distributions import binomial as Binomial
+from distributions import negativebinomial as NegativeBinomial
+from distributions import poisson as Poisson
 
 
 @pytest.mark.parametrize(
@@ -91,6 +95,24 @@ from distributions import studentt as StudentT
             {"df": 5, "loc": 0, "scale": 2},
             (-np.inf, np.inf),
         ),
+        ("_", Bernoulli, stats.bernoulli, (pt.constant(0.4),), {"p": 0.4}, (0, 1)),
+        (
+            "binomial",
+            Binomial,
+            stats.binom,
+            (pt.constant(4), pt.constant(0.4)),
+            {"n": 4, "p": 0.4},
+            (0, 4),
+        ),
+        (
+            "negativebinomial",
+            NegativeBinomial,
+            stats.nbinom,
+            (pt.constant(2.1), pt.constant(0.375)),
+            {"n": 2.1, "p": 0.375},
+            (0, np.inf),
+        ),
+        ("_", Poisson, stats.poisson, (pt.constant(2.0),), {"mu": (2.0,)}, (0, np.inf)),
     ],
 )
 def test_match_scipy(name, p_dist, sp_dist, p_params, sp_params, support):
@@ -99,7 +121,7 @@ def test_match_scipy(name, p_dist, sp_dist, p_params, sp_params, support):
     # Entropy
     actual = p_dist.entropy(*p_params).eval()
     expected = scipy_dist.entropy()
-    if name in ["skewnormal", "halfstudent0"]:
+    if name in ["skewnormal", "halfstudent0", "negativebinomial"]:
         assert_almost_equal(actual, expected, decimal=2)
     else:
         assert_almost_equal(actual, expected, decimal=4)
@@ -134,7 +156,10 @@ def test_match_scipy(name, p_dist, sp_dist, p_params, sp_params, support):
 
     # PDF
     actual_pdf = p_dist.pdf(extended_vals, *p_params).eval()
-    expected_pdf = scipy_dist.pdf(extended_vals)
+    try:
+        expected_pdf = scipy_dist.pdf(extended_vals)
+    except AttributeError:
+        expected_pdf = scipy_dist.pmf(extended_vals)
 
     if name in ["halfstudent0"]:
         assert_almost_equal(actual_pdf, expected_pdf, decimal=2)
@@ -143,7 +168,10 @@ def test_match_scipy(name, p_dist, sp_dist, p_params, sp_params, support):
 
     # logPDF
     actual_logpdf = p_dist.logpdf(extended_vals, *p_params).eval()
-    expected_logpdf = scipy_dist.logpdf(extended_vals)
+    try:
+        expected_logpdf = scipy_dist.logpdf(extended_vals)
+    except AttributeError:
+        expected_logpdf = scipy_dist.logpmf(extended_vals)
 
     if name in ["halfstudent0"]:
         assert_almost_equal(actual_logpdf, expected_logpdf, decimal=2)
