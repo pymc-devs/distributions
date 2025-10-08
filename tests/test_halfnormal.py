@@ -1,0 +1,30 @@
+"""
+Test HalfNormal distribution against scipy implementation.
+"""
+import pytest
+from scipy import stats
+from distributions import halfnormal as HalfNormal
+from .helper_scipy import run_distribution_tests, make_params
+
+
+@pytest.mark.parametrize(
+    "params, sp_params",
+    [
+        ([3.5], {"loc": 0, "scale": 3.5}),
+        ([1e-6], {"loc": 0, "scale": 1e-6}),
+        ([1e6], {"loc": 0, "scale": 1e6}),
+    ],
+)
+def test_halfnormal_vs_scipy(params, sp_params):
+    """Test HalfNormal distribution against scipy.stats.halfnorm."""
+    p_params = make_params(*params)
+    support = (0, float('inf'))
+    
+    run_distribution_tests(
+        p_dist=HalfNormal,
+        sp_dist=stats.halfnorm,
+        p_params=p_params,
+        sp_params=sp_params,
+        support=support,
+        name="halfnormal"
+    )

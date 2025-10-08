@@ -43,13 +43,11 @@ def rvs(p, size=None, random_state=None):
 
 
 def cdf(x, p):
-    x = pt.as_tensor_variable(x)
     return cdf_bounds(pt.switch(pt.lt(x, 1), 1 - p, 1.0), x, 0, 1)
 
 
 def ppf(q, p):
-    q = pt.as_tensor_variable(q)
-    x_val = pt.switch(pt.lt(q, 1 - p), 0, 1)
+    x_val = pt.switch(pt.le(q, 1 - p), 0, 1)
     return ppf_bounds_disc(x_val, q, 0, 1)
 
 
@@ -62,17 +60,14 @@ def isf(q, p):
 
 
 def pdf(x, p):
-    x = pt.as_tensor_variable(x)
     return pt.switch(pt.eq(x, 1), p, pt.switch(pt.eq(x, 0), 1 - p, 0.0))
 
 
 def logpdf(x, p):
-    x = pt.as_tensor_variable(x)
     return pt.switch(pt.eq(x, 1), pt.log(p), pt.switch(pt.eq(x, 0), pt.log(1 - p), -pt.inf))
 
 
 def logcdf(x, p):
-    x = pt.as_tensor_variable(x)
     return pt.switch(pt.lt(x, 0), -pt.inf, pt.switch(pt.lt(x, 1), pt.log(1 - p), 0.0))
 
 

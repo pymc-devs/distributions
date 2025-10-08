@@ -1,7 +1,8 @@
 import pytensor.tensor as pt
-from pytensor.tensor import gammaincinv
 
-from .helper import cdf_bounds, discrete_entropy, ppf_bounds_disc
+from pytensor.tensor.xlogx import xlogy0
+from .helper import cdf_bounds, discrete_entropy, sf_bounds
+from .optimization import find_ppf_discrete
 
 
 def mean(mu):
@@ -13,7 +14,7 @@ def mode(mu):
 
 
 def median(mu):
-    return pt.floor(mu + 1.0 / 3.0 - 0.02 / mu)
+    return pt.floor(mu)
 
 
 def var(mu):
@@ -34,12 +35,10 @@ def kurtosis(mu):
 
 def entropy(mu):
     # Use explicit sum for small mu and Stirling's approximation for large mu
-    lower = pt.cast(ppf(0.0001, mu), "int32")
-    upper = pt.cast(ppf(0.9999, mu), "int32")
     return pt.switch(
-        pt.lt(mu, 100),
-        discrete_entropy(lower, upper, logpdf, mu),
-        0.5 * pt.log(2.0 * pt.pi * pt.e * mu) - 1.0 / (12.0 * mu) - 1.0 / (24.0 * mu * mu),
+        pt.lt(mu, 10),
+        discrete_entropy(0, 25, logpdf, mu),
+        0.5 * pt.log(2.0 * pt.pi * pt.e * mu) - 1.0 / (12.0 * mu),
     )
 
 
@@ -52,30 +51,33 @@ def cdf(x, mu):
 
 
 def ppf(q, mu):
-    return ppf_bounds_disc(pt.round(gammaincinv(mu + 1, q)) - 1, q, 0, pt.inf)
+    params = (mu,)
+    return find_ppf_discrete(q, 0, pt.inf, cdf, *params)
 
 
 def sf(x, mu):
-    return 1.0 - cdf(x, mu)
+    return sf_bounds(pt.gammainc(pt.floor(x) + 1, mu), x, 0, pt.inf)
 
 
 def isf(q, mu):
     return ppf(1.0 - q, mu)
-
 
 def rvs(mu, size=None, random_state=None):
     return pt.random.poisson(mu, rng=random_state, size=size)
 
 
 def logpdf(x, mu):
-    x = pt.as_tensor_variable(x)
-    mu = pt.as_tensor_variable(mu)
-    return pt.switch(pt.lt(x, 0), -pt.inf, x * pt.log(mu) - pt.gammaln(x + 1) - mu)
-
+    return xlogy0(x, mu) - pt.gammaln(x + 1) - mu
 
 def logcdf(x, mu):
     return pt.log(cdf(x, mu))
 
 
 def logsf(x, mu):
-    return pt.log1p(-cdf(x, mu))
+    return pt.log(sf(x, mu))
+
+
+def expect(x, mu, func):
+    if func is None:
+        return x * pdf(x, mu)
+    return func(x) * pdf(x, mu)

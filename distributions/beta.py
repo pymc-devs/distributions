@@ -1,6 +1,7 @@
 import pytensor.tensor as pt
-from pytensor.tensor.special import betaln
 from pytensor.tensor.math import betaincinv
+from pytensor.tensor.special import betaln
+from pytensor.tensor.xlogx import xlogy0
 
 from .helper import ppf_bounds_cont
 
@@ -33,37 +34,32 @@ def std(alpha, beta):
 
 
 def skewness(alpha, beta):
-    alpha_b, beta_b = pt.broadcast_arrays(alpha, beta)
-
-    psc = alpha_b + beta_b
+    psc = alpha + beta
     result = pt.where(
-        pt.eq(alpha_b, beta_b),
+        pt.eq(alpha, beta),
         0.0,
-        (2 * (beta_b - alpha_b) * pt.sqrt(psc + 1)) / ((psc + 2) * pt.sqrt(alpha_b * beta_b)),
+        (2 * (beta - alpha) * pt.sqrt(psc + 1)) / ((psc + 2) * pt.sqrt(alpha * beta)),
     )
     return result
 
 
 def kurtosis(alpha, beta):
-    alpha_b, beta_b = pt.broadcast_arrays(alpha, beta)
-    psc = alpha_b + beta_b
-    prod = alpha_b * beta_b
+    psc = alpha + beta
+    prod = alpha * beta
     result = (
         6
-        * (pt.abs(alpha_b - beta_b) ** 2 * (psc + 1) - prod * (psc + 2))
+        * (pt.abs(alpha - beta) ** 2 * (psc + 1) - prod * (psc + 2))
         / (prod * (psc + 2) * (psc + 3))
     )
     return result
 
 
 def entropy(alpha, beta):
-    alpha_b, beta_b = pt.broadcast_arrays(alpha, beta)
-    psc = alpha_b + beta_b
     return (
-        betaln(alpha_b, beta_b)
-        - (alpha_b - 1) * pt.psi(alpha_b)
-        - (beta_b - 1) * pt.psi(beta_b)
-        + (psc - 2) * pt.psi(psc)
+        betaln(alpha, beta)
+        - (alpha - 1) * pt.psi(alpha)
+        - (beta - 1) * pt.psi(beta)
+        + (alpha + beta - 2) * pt.psi(alpha + beta)
     )
 
 
@@ -104,12 +100,13 @@ def logcdf(x, alpha, beta):
 
 
 def logpdf(x, alpha, beta):
-    result = (
-        pt.switch(pt.eq(alpha, 1.0), 0.0, (alpha - 1.0) * pt.log(x))
-        + pt.switch(pt.eq(beta, 1.0), 0.0, (beta - 1.0) * pt.log1p(-x))
-        - (pt.gammaln(alpha) + pt.gammaln(beta) - pt.gammaln(alpha + beta))
+    return pt.switch(
+        pt.bitwise_or(pt.lt(x, 0), pt.gt(x, 1)),
+        -pt.inf,
+        (xlogy0((alpha - 1), x) + xlogy0((beta - 1), 1 - x))
+        - (xlogy0((alpha + beta - 1), 1) + betaln(alpha, beta)),
     )
-    return pt.switch(pt.bitwise_and(pt.ge(x, 0.0), pt.le(x, 1.0)), result, -pt.inf)
+
 
 
 def logsf(x, alpha, beta):

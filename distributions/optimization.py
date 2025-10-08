@@ -16,8 +16,8 @@ def find_ppf(q, lower, upper, cdf, *params):
         return cdf(x, *params) - q
 
     factor = 10.0
-    right = pt.switch(pt.isinf(upper), factor, upper - 1e-10)
-    left = pt.switch(pt.isinf(lower), pt.minimum(-factor, right), lower + 1e-10)
+    right = pt.switch(pt.isinf(upper), factor, upper)
+    left = pt.switch(pt.isinf(lower), -factor, lower)
 
     for _ in range(10):
         f_left = func(left)
@@ -38,10 +38,9 @@ def find_ppf(q, lower, upper, cdf, *params):
     for _ in range(50):
         mid = 0.5 * (left + right)
         f_mid = cdf(mid, *params) - q
-        f_lower_curr = cdf(left, *params) - q
 
-        new_lower = pt.switch(pt.lt(f_mid * f_lower_curr, 0), left, mid)
-        new_upper = pt.switch(pt.lt(f_mid * f_lower_curr, 0), mid, right)
+        new_lower = pt.switch(pt.lt(f_mid, 0), mid, left)
+        new_upper = pt.switch(pt.lt(f_mid, 0), right, mid)
 
         left = new_lower
         right = new_upper
@@ -57,6 +56,7 @@ def find_ppf_discrete(q, lower, upper, cdf, *params):
     we round to the nearest integer and then check if we need to adjust.
     """
     rounded_k = pt.round(find_ppf(q, lower, upper, cdf, *params))
+    #return ppf_bounds_disc(rounded_k, q, lower, upper)
     cdf_k = cdf(rounded_k, *params)
     rounded_k = pt.switch(pt.lt(cdf_k, q), rounded_k + 1, rounded_k)
     return ppf_bounds_disc(rounded_k, q, lower, upper)

@@ -11,11 +11,14 @@ def mean(mu, sigma, alpha):
 
 
 def mode(mu, sigma, alpha):
-    # For skew normal, the mode is approximately mu + sigma * delta * sqrt(2/pi)
-    # where delta = alpha / sqrt(1 + alpha^2), but this is an approximation
-    mu_b, sigma_b, alpha_b = pt.broadcast_arrays(mu, sigma, alpha)
-    delta = alpha_b / pt.sqrt(1 + alpha_b**2)
-    return mu_b + sigma_b * delta * pt.sqrt(2 / pt.pi)
+    delta = alpha / pt.sqrt(1 + alpha**2)
+
+    term1 = pt.sqrt(2 / pt.pi) * delta
+    term2 = (1 - pt.pi / 4) * (term1**3) / (1 - (2 / pt.pi) * delta**2)
+    term3 = 0.5 * pt.sgn(alpha) * pt.exp(-2 * pt.pi / pt.abs(alpha))
+
+    mo_alpha = term1 - term2 - term3
+    return mu + sigma * mo_alpha
 
 
 def median(mu, sigma, alpha):

@@ -76,11 +76,10 @@ def logcdf(x, alpha, beta):
 
 def logpdf(x, alpha, beta):
     return pt.switch(
-        pt.le(x, 0),
+        pt.lt(x, 0),
         -pt.inf,
         (alpha - 1.0) * pt.log(x) - x * beta - pt.gammaln(alpha) + alpha * pt.log(beta),
     )
-
 
 def logsf(x, alpha, beta):
     return pt.switch(

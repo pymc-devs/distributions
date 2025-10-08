@@ -86,6 +86,8 @@ def ppf_bounds_disc(x_val, q, lower, upper):
         ),
     )
 
+def sf_bounds(x_val, q, lower, upper):
+    return pt.switch(pt.lt(q, lower), 1., pt.switch(pt.gt(q, upper), 0., x_val))
 
 def discrete_entropy(min_x, max_x, logpdf, *params):
     """
