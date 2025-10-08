@@ -9,7 +9,6 @@ import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal, assert_allclose
 from scipy.stats import skew, kurtosis
-from scipy.integrate import quad
 import pytensor.tensor as pt
 
 
@@ -210,14 +209,12 @@ def test_moments_consistency(dist, params_tensor, params_value, n_samples=50_000
     rng = pt.random.default_rng(71094)
     samples = dist.rvs(*params_tensor, n_samples, random_state=rng).eval()
 
-    # Empirical moments
     mean_emp = np.mean(samples)
-    std_emp = np.std(samples, ddof=1)  # Use ddof=1 for unbiased estimate
+    std_emp = np.std(samples, ddof=1)
     var_emp = np.var(samples, ddof=1)
     skew_emp = skew(samples)
     kurt_emp = kurtosis(samples)
 
-    # Theoretical moments
     mean_theo = dist.mean(*params_tensor).eval()
     std_theo = dist.std(*params_tensor).eval()
     var_theo = dist.var(*params_tensor).eval()
