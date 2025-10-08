@@ -1,7 +1,7 @@
 import pytensor.tensor as pt
-from pytensor.tensor import gammaincinv
 
-from .helper import cdf_bounds, discrete_entropy, ppf_bounds_disc
+from .helper import cdf_bounds, discrete_entropy
+from .optimization import find_ppf_discrete
 
 
 def mean(mu):
@@ -52,7 +52,8 @@ def cdf(x, mu):
 
 
 def ppf(q, mu):
-    return ppf_bounds_disc(pt.round(gammaincinv(mu + 1, q)) - 1, q, 0, pt.inf)
+    params = (mu,)
+    return find_ppf_discrete(q, 0, pt.inf, cdf, *params)
 
 
 def sf(x, mu):
