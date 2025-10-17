@@ -11,12 +11,11 @@ def mean(n, p):
 
 
 def mode(n, p):
-    y = (n + 1) * p
-    return pt.switch(pt.eq(p, 1), n, pt.floor(y))
+    return pt.floor((n + 1) * p)
 
 
 def median(n, p):
-    return pt.ceil(n * p)
+    return ppf(0.5, n, p)
 
 
 def var(n, p):
@@ -37,11 +36,7 @@ def kurtosis(n, p):
 
 
 def entropy(n, p):
-    return pt.switch(
-        pt.lt(n, 25),
-        discrete_entropy(0, n + 1, logpdf, n, p),
-        normal_entropy(0, std(n, p)),
-    )
+    return discrete_entropy(0, n + 1, logpdf, n, p)
 
 
 def pdf(x, n, p):
@@ -86,4 +81,4 @@ def logcdf(x, n, p):
 
 
 def logsf(x, n, p):
-    return pt.log1mexp(logcdf(x, n, p))
+    return pt.log1p(-cdf(x, n, p))

@@ -5,7 +5,7 @@ from pytensor.tensor.math import betaincinv
 from .helper import cdf_bounds, ppf_bounds_cont
 from .halfnormal import entropy as halfnormal_entropy
 from .halfnormal import cdf as halfnormal_cdf
-from .halfnormal import logcdf as halfnormal_logpdf
+from .halfnormal import logpdf as halfnormal_logpdf
 
 
 def mean(nu, sigma):
@@ -68,18 +68,19 @@ def entropy(nu, sigma):
         pt.log(sigma)
         + 0.5 * (nu + 1) * (pt.psi(0.5 * (nu + 1)) - pt.psi(0.5 * nu))
         + pt.log(pt.sqrt(nu))
-        + betaln(0.5 * nu, 0.5),
-    ) - pt.log(2)
+        + betaln(0.5 * nu, 0.5)
+        - pt.log(2),
+    )
 
 
 def cdf(x, nu, sigma):
     # we use a halfnormal approximation for large nu
-    x = x / sigma
-    factor = 0.5 * pt.betainc(0.5 * nu, 0.5, nu / (x**2 + nu))
-    cdf_ = pt.switch(pt.lt(x, 0), factor, 1 - factor) * 2 - 1
-    halft_logcdf = cdf_bounds(cdf_, x, 0, pt.inf)
+    x_norm = x / sigma
+    factor = 0.5 * pt.betainc(0.5 * nu, 0.5, nu / (x_norm**2 + nu))
+    cdf_ = pt.switch(pt.lt(x_norm, 0), factor, 1 - factor) * 2 - 1
+    halft_cdf = cdf_bounds(cdf_, x, 0, pt.inf)
 
-    return pt.switch(pt.gt(nu, 1e5), halfnormal_cdf(x, sigma), halft_logcdf)
+    return pt.switch(pt.gt(nu, 1e5), halfnormal_cdf(x, sigma), halft_cdf)
 
 
 def isf(x, nu, sigma):

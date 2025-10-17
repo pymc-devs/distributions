@@ -38,38 +38,33 @@ def std(alpha, beta, lower, upper):
 
 
 def skewness(alpha, beta, lower, upper):
-    alpha_b, beta_b = pt.broadcast_arrays(alpha, beta)
-
-    psc = alpha_b + beta_b
+    psc = alpha + beta
     result = pt.where(
-        pt.eq(alpha_b, beta_b),
+        pt.eq(alpha, beta),
         0.0,
-        (2 * (beta_b - alpha_b) * pt.sqrt(psc + 1)) / ((psc + 2) * pt.sqrt(alpha_b * beta_b)),
+        (2 * (beta - alpha) * pt.sqrt(psc + 1)) / ((psc + 2) * pt.sqrt(alpha * beta)),
     )
     return result
 
 
 def kurtosis(alpha, beta, lower, upper):
-    alpha_b, beta_b = pt.broadcast_arrays(alpha, beta)
-    psc = alpha_b + beta_b
-    prod = alpha_b * beta_b
+    psc = alpha + beta
+    prod = alpha * beta
     result = (
         6
-        * (pt.abs(alpha_b - beta_b) ** 2 * (psc + 1) - prod * (psc + 2))
+        * (pt.abs(alpha - beta) ** 2 * (psc + 1) - prod * (psc + 2))
         / (prod * (psc + 2) * (psc + 3))
     )
     return result
 
 
 def entropy(alpha, beta, lower, upper):
-    alpha_b, beta_b, lower_b, upper_b = pt.broadcast_arrays(alpha, beta, lower, upper)
-    psc = alpha_b + beta_b
     return (
-        betaln(alpha_b, beta_b)
-        - (alpha_b - 1) * pt.psi(alpha_b)
-        - (beta_b - 1) * pt.psi(beta_b)
-        + (psc - 2) * pt.psi(psc)
-        + pt.log(upper_b - lower_b)
+        betaln(alpha, beta)
+        - (alpha - 1) * pt.psi(alpha)
+        - (beta - 1) * pt.psi(beta)
+        + (alpha + beta - 2) * pt.psi(alpha + beta)
+        + pt.log(upper - lower)
     )
 
 

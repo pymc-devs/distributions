@@ -1,7 +1,7 @@
 import pytensor.tensor as pt
 from pytensor.tensor.xlogx import xlogy0
 
-from .helper import cdf_bounds, discrete_entropy
+from .helper import cdf_bounds, discrete_entropy, sf_bounds
 from .optimization import find_ppf_discrete
 
 
@@ -34,8 +34,8 @@ def kurtosis(n, p):
 
 
 def entropy(n, p):
-    lower = pt.cast(ppf(0.0001, n, p), "int32")
-    upper = pt.cast(ppf(0.9999, n, p), "int32")
+    lower = ppf(0.0001, n, p)
+    upper = ppf(0.9999, n, p)
     return discrete_entropy(lower, upper, logpdf, n, p)
 
 
@@ -44,7 +44,8 @@ def pdf(x, n, p):
 
 
 def cdf(x, n, p):
-    return cdf_bounds(pt.betainc(n, x + 1, p), x, 0, pt.inf)
+    k = pt.floor(x)
+    return cdf_bounds(pt.betainc(n, k + 1, p), k, 0, pt.inf)
 
 
 def ppf(q, n, p):
@@ -53,7 +54,10 @@ def ppf(q, n, p):
 
 
 def sf(x, n, p):
-    return 1.0 - cdf(x, n, p)
+    k = pt.floor(x)
+    betainc_result = pt.switch(pt.isinf(k), 0.0, pt.betainc(k + 1, n, 1 - p))
+    return sf_bounds(betainc_result, k, 0, pt.inf)
+
 
 
 def isf(q, n, p):
@@ -77,7 +81,7 @@ def logcdf(x, n, p):
 
 
 def logsf(x, n, p):
-    return pt.log1p(-cdf(x, n, p))
+    return pt.log(sf(x, n, p))
 
 
 def from_mu_alpha(mu, alpha):
