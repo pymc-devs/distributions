@@ -86,8 +86,53 @@ def ppf_bounds_disc(x_val, q, lower, upper):
         ),
     )
 
+
 def sf_bounds(x_val, q, lower, upper):
-    return pt.switch(pt.lt(q, lower), 1., pt.switch(pt.gt(q, upper), 0., x_val))
+    return pt.switch(pt.lt(q, lower), 1.0, pt.switch(pt.gt(q, upper), 0.0, x_val))
+
+
+def logdiffexp(a, b):
+    """Return log(exp(a) - exp(b))."""
+    return a + pt.log1mexp(b - a)
+
+
+def continuous_entropy(min_x, max_x, logpdf_func, *params):
+    """
+    Compute entropy for continuous distributions using numerical integration.
+
+    Parameters
+    ----------
+    min_x : float
+        Minimum value for integration
+    max_x : float
+        Maximum value for integration
+    logpdf_func : function
+        Log probability density function that takes (x, *params) as arguments
+    *params : tensor variables
+        Distribution parameters to pass to logpdf_func
+
+    Returns
+    -------
+    entropy : tensor
+    """
+    if len(params) == 1:
+        broadcast_shape = pt.as_tensor_variable(params[0])
+    else:
+        broadcast_shape = pt.broadcast_arrays(*params)[0]
+
+    x_values = pt.linspace(min_x, max_x, 1000)
+    x_broadcast = x_values.reshape((-1,) + (1,) * broadcast_shape.ndim)
+
+    logpdf_vals = logpdf_func(x_broadcast, *params)
+    pdf_vals = pt.exp(logpdf_vals)
+
+    integrand = -pdf_vals * logpdf_vals
+
+    dx = (max_x - min_x) / (1000 - 1)
+    result = dx * (0.5 * integrand[0] + pt.sum(integrand[1:-1], axis=0) + 0.5 * integrand[-1])
+
+    return pt.squeeze(result) if broadcast_shape.ndim == 0 else result
+
 
 def discrete_entropy(min_x, max_x, logpdf, *params):
     """

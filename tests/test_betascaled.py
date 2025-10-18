@@ -1,6 +1,7 @@
 """
 Test BetaScaled distribution against scipy implementation.
 """
+
 import pytest
 from scipy import stats
 from distributions import betascaled as BetaScaled
@@ -28,4 +29,4 @@ def test_betascaled_vs_scipy(params, sp_params):
         sp_params=sp_params,
         support=support,
         name="betascaled",
-        )
+    )

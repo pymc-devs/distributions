@@ -56,7 +56,7 @@ def find_ppf_discrete(q, lower, upper, cdf, *params):
     we round to the nearest integer and then check if we need to adjust.
     """
     rounded_k = pt.round(find_ppf(q, lower, upper, cdf, *params))
-    #return ppf_bounds_disc(rounded_k, q, lower, upper)
+    # return ppf_bounds_disc(rounded_k, q, lower, upper)
     cdf_k = cdf(rounded_k, *params)
     rounded_k = pt.switch(pt.lt(cdf_k, q), rounded_k + 1, rounded_k)
     return ppf_bounds_disc(rounded_k, q, lower, upper)

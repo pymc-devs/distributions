@@ -1,6 +1,7 @@
 """
 Tests for the HalfStudentT distribution.
 """
+
 import pytest
 import numpy as np
 from scipy import stats
@@ -20,7 +21,7 @@ test_cases = [
             "skip_skewness": True,
             "skip_kurtosis": True,
             "use_quantiles_for_rvs": True,
-        }
+        },
     },
     # Large nu but below halfnormal approximation
     {
@@ -38,10 +39,10 @@ test_cases = [
             "logsf_rtol": 1e-2,
             "isf_rtol": 1e-2,
             "median_rtol": 1e-2,
-            "skip_skewness": True,  
+            "skip_skewness": True,
             "skip_kurtosis": True,
             "use_quantiles_for_rvs": True,
-        }
+        },
     },
     # nu=1, HalfCauchy
     {
@@ -51,7 +52,7 @@ test_cases = [
         "name": "halfstudent_cauchy",
         "special_settings": {
             "use_quantiles_for_rvs": True,
-        }
+        },
     },
 ]
 
@@ -60,7 +61,7 @@ test_cases = [
 def test_halfstudentt_vs_scipy(test_case):
     """Test HalfStudentT distribution against appropriate scipy distributions."""
     special_settings = test_case.get("special_settings", {})
-    support = (0, float('inf'))
+    support = (0, float("inf"))
 
     run_distribution_tests(
         p_dist=HalfStudentT,
@@ -69,5 +70,5 @@ def test_halfstudentt_vs_scipy(test_case):
         sp_params=test_case["sp_params"],
         support=support,
         name=test_case["name"],
-        **special_settings
+        **special_settings,
     )
