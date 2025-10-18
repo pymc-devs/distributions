@@ -1,6 +1,7 @@
 """
 Test Bernoulli distribution against scipy implementation.
 """
+
 import pytest
 from scipy import stats
 from distributions import bernoulli as Bernoulli
@@ -20,7 +21,7 @@ def test_bernoulli_vs_scipy(params, sp_params):
     """Test Bernoulli distribution against scipy.stats.bernoulli."""
     p_params = make_params(*params)
     support = (0, 1)
-    
+
     run_distribution_tests(
         p_dist=Bernoulli,
         sp_dist=stats.bernoulli,

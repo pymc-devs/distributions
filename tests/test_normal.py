@@ -1,6 +1,7 @@
 """
 Test Normal distribution against scipy implementation.
 """
+
 import pytest
 from scipy import stats
 from distributions import normal as Normal
@@ -16,18 +17,17 @@ from .helper_scipy import run_distribution_tests, make_params
         ([10.0, 1e-6], {"loc": 10.0, "scale": 1e-6}),
         ([1.0, 1e-6], {"loc": 1.0, "scale": 1e-6}),
     ],
-
 )
 def test_normal_vs_scipy(params, sp_params):
     """Test Normal distribution against scipy"""
     p_params = make_params(*params)
-    support = (-float('inf'), float('inf'))
-    
+    support = (-float("inf"), float("inf"))
+
     run_distribution_tests(
         p_dist=Normal,
         sp_dist=stats.norm,
         p_params=p_params,
         sp_params=sp_params,
         support=support,
-        name="normal"
+        name="normal",
     )

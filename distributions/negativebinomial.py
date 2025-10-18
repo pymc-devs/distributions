@@ -59,7 +59,6 @@ def sf(x, n, p):
     return sf_bounds(betainc_result, k, 0, pt.inf)
 
 
-
 def isf(q, n, p):
     return ppf(1.0 - q, n, p)
 

@@ -1,6 +1,7 @@
 """
 Test Cauchy distribution against scipy implementation.
 """
+
 import pytest
 from scipy import stats
 from distributions import cauchy as Cauchy
@@ -20,8 +21,8 @@ from .helper_scipy import run_distribution_tests, make_params
 def test_cauchy_vs_scipy(params, sp_params):
     """Test Cauchy distribution against scipy.stats.cauchy."""
     p_params = make_params(*params)
-    support = (-float('inf'), float('inf'))
-    
+    support = (-float("inf"), float("inf"))
+
     # Cauchy distribution has undefined mean and variance, so skip those tests
     run_distribution_tests(
         p_dist=Cauchy,
@@ -31,5 +32,5 @@ def test_cauchy_vs_scipy(params, sp_params):
         support=support,
         name="cauchy",
         skip_skewness=True,  # Undefined for Cauchy
-        skip_kurtosis=True   # Undefined for Cauchy
+        skip_kurtosis=True,  # Undefined for Cauchy
     )

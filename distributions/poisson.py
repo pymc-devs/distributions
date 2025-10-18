@@ -62,12 +62,14 @@ def sf(x, mu):
 def isf(q, mu):
     return ppf(1.0 - q, mu)
 
+
 def rvs(mu, size=None, random_state=None):
     return pt.random.poisson(mu, rng=random_state, size=size)
 
 
 def logpdf(x, mu):
     return xlogy0(x, mu) - pt.gammaln(x + 1) - mu
+
 
 def logcdf(x, mu):
     return pt.log(cdf(x, mu))

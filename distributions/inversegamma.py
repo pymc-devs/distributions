@@ -31,16 +31,15 @@ def kurtosis(alpha, beta):
     return pt.switch(pt.gt(alpha, 4), 6 * (5 * alpha - 11) / ((alpha - 3) * (alpha - 4)), pt.nan)
 
 
-
 def entropy(alpha, beta):
     h_regular = alpha - (alpha + 1.0) * pt.digamma(alpha) + pt.gammaln(alpha) + pt.log(beta)
 
     h_asymptotic = (
         (1 - 3 * pt.log(alpha) + pt.log(2) + pt.log(pt.pi)) / 2
-        + 2 / 3 * alpha ** -1
-        + alpha ** -2 / 12
-        - alpha ** -3 / 90
-        - alpha ** -4 / 120
+        + 2 / 3 * alpha**-1
+        + alpha**-2 / 12
+        - alpha**-3 / 90
+        - alpha**-4 / 120
         + pt.log(beta)
     )
     return pt.switch(pt.ge(alpha, 200), h_asymptotic, h_regular)
