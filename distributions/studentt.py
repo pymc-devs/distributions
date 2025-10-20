@@ -84,7 +84,7 @@ def ppf(q, nu, mu, sigma):
             pt.lt(q, 0.5),
             -pt.sqrt(nu) * pt.sqrt((1.0 / betaincinv(nu * 0.5, 0.5, 2.0 * q)) - 1.0),
             pt.sqrt(nu) * pt.sqrt((1.0 / betaincinv(nu * 0.5, 0.5, 2.0 * (1 - q))) - 1.0),
-        )
+        ),
     )
     return ppf_bounds_cont(mu + result * sigma, q, -pt.inf, pt.inf)
 
