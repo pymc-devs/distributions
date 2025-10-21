@@ -1,12 +1,11 @@
-"""
-Test Binomial distribution against scipy implementation.
-"""
+"""Test Binomial distribution against scipy implementation."""
 
-import pytest
 import pytensor.tensor as pt
+import pytest
 from scipy import stats
+
 from distributions import binomial as Binomial
-from .helper_scipy import run_distribution_tests, make_params
+from tests.helper_scipy import run_distribution_tests
 
 
 @pytest.mark.parametrize(

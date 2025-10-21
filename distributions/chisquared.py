@@ -1,7 +1,7 @@
 import pytensor.tensor as pt
-
-from .helper import ppf_bounds_cont, cdf_bounds
 from pytensor.tensor.xlogx import xlogy0
+
+from distributions.helper import cdf_bounds, ppf_bounds_cont
 
 
 def mean(nu):

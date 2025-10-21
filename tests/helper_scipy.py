@@ -1,10 +1,8 @@
-"""
-Common utilities for testing distributions against scipy implementations.
-"""
+"""Common utilities for testing distributions against scipy implementations."""
 
 import numpy as np
 import pytensor.tensor as pt
-from numpy.testing import assert_almost_equal, assert_allclose
+from numpy.testing import assert_allclose
 
 
 def run_distribution_tests(
@@ -182,12 +180,13 @@ def run_distribution_tests(
         pdf_left = p_dist.pdf(mode_val - eps, *p_params).eval()
         pdf_right = p_dist.pdf(mode_val + eps, *p_params).eval()
 
-        assert (
-            pdf_mode >= pdf_left - 1e-4
-        ), f"Mode test (left) failed with {param_info}: pdf_mode={pdf_mode}, pdf_left={pdf_left}"
-        assert (
-            pdf_mode >= pdf_right - 1e-4
-        ), f"Mode test (right) failed with {param_info}: pdf_mode={pdf_mode}, pdf_right={pdf_right}"
+        assert pdf_mode >= pdf_left - 1e-4, (
+            f"Mode test (left) failed with {param_info}: pdf_mode={pdf_mode}, pdf_left={pdf_left}"
+        )
+        assert pdf_mode >= pdf_right - 1e-4, (
+            f"Mode test (right) failed with {param_info}: "
+            f"pdf_mode={pdf_mode}, pdf_right={pdf_right}"
+        )
 
     # Standard deviation
     std = p_dist.std(*p_params).eval()
@@ -230,7 +229,7 @@ def run_distribution_tests(
 
 
 def make_params(*values, dtype=None):
-    """Helper to create PyTensor constant parameters."""
+    """Create PyTensor constant parameters."""
     if dtype:
         return tuple(pt.constant(v, dtype=dtype) for v in values)
     return tuple(pt.constant(v) for v in values)

@@ -1,6 +1,6 @@
 import pytensor.tensor as pt
 
-from .helper import ppf_bounds_cont, cdf_bounds
+from distributions.helper import ppf_bounds_cont
 
 
 def mean(beta):

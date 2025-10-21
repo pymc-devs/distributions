@@ -1,11 +1,10 @@
-"""
-Test NegativeBinomial distribution against scipy implementation.
-"""
+"""Test NegativeBinomial distribution against scipy implementation."""
 
 import pytest
 from scipy import stats
+
 from distributions import negativebinomial as NegativeBinomial
-from .helper_scipy import run_distribution_tests, make_params
+from tests.helper_scipy import make_params, run_distribution_tests
 
 
 @pytest.mark.parametrize(

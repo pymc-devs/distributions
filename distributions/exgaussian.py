@@ -1,9 +1,9 @@
 import pytensor.tensor as pt
 
-from .helper import logdiffexp, continuous_entropy
-from .optimization import find_ppf
-from .normal import logcdf as normal_logcdf
-from .normal import logpdf as normal_logpdf
+from distributions.helper import continuous_entropy, logdiffexp
+from distributions.normal import logcdf as normal_logcdf
+from distributions.normal import logpdf as normal_logpdf
+from distributions.optimization import find_ppf
 
 
 def mean(mu, sigma, nu):

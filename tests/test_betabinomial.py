@@ -1,12 +1,11 @@
-"""
-Test BetaBinomial distribution against scipy implementation.
-"""
+"""Test BetaBinomial distribution against scipy implementation."""
 
+import pytensor.tensor as pt
 import pytest
 from scipy import stats
-import pytensor.tensor as pt
+
 from distributions import betabinomial as BetaBinomial
-from .helper_scipy import run_distribution_tests, make_params
+from tests.helper_scipy import run_distribution_tests
 
 
 @pytest.mark.parametrize(
@@ -20,7 +19,7 @@ from .helper_scipy import run_distribution_tests, make_params
     ],
 )
 def test_betabinomial_vs_scipy(params, sp_params):
-    """Test BetaBinomial distribution against scipy"""
+    """Test BetaBinomial distribution against scipy."""
     n_param = pt.constant(params[0], dtype="int64")
     alpha_param = pt.constant(params[1], dtype="float64")
     beta_param = pt.constant(params[2], dtype="float64")

@@ -1,13 +1,11 @@
-"""
-Test Kumaraswamy distribution against scipy implementation.
-"""
+"""Test Kumaraswamy distribution against scipy implementation."""
 
 import pytest
-import numpy as np
 from scipy import stats
+
 from distributions import kumaraswamy as Kumaraswamy
-from .helper_scipy import run_distribution_tests, make_params
-from .helper_empirical import run_empirical_tests
+from tests.helper_empirical import run_empirical_tests
+from tests.helper_scipy import make_params, run_distribution_tests
 
 
 @pytest.mark.parametrize(

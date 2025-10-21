@@ -1,13 +1,10 @@
-"""
-Common utilities for testing distributions against empirical samples.
-For distributions not available in scipy.
-"""
+"""Common utilities for testing distributions not available in scipy."""
 
 import numpy as np
 import pytensor.tensor as pt
 from numpy.testing import assert_allclose
-from scipy.stats import skew, kurtosis
 from scipy.integrate import quad
+from scipy.stats import kurtosis, skew
 
 
 def run_empirical_tests(
@@ -24,9 +21,7 @@ def run_empirical_tests(
     quantiles_rtol=1e-4,
     cdf_rtol=1e-4,
 ):
-    """
-    Test a distribution against empirical samples for distributions not in scipy.
-    """
+    """Test a distribution against empirical samples for distributions not in scipy."""
     rng_p = pt.random.default_rng(1)
     rvs = p_dist.rvs(*p_params, size=sample_size, random_state=rng_p).eval()
     sample_x = rvs[:20]
@@ -178,9 +173,9 @@ def run_empirical_tests(
     mask = np.abs(pdf_vals) > 1e-4
     if np.any(mask):
         rel_error = np.abs(numerical_pdf[mask] - pdf_vals[mask]) / (np.abs(pdf_vals[mask]) + 1e-10)
-        assert np.all(
-            rel_error < 1e-3
-        ), f"PDF doesn't match CDF derivative. Max rel error: {np.max(rel_error)}"
+        assert np.all(rel_error < 1e-3), (
+            f"PDF doesn't match CDF derivative. Max rel error: {np.max(rel_error)}"
+        )
 
     # PPF-CDF inverse
     x_vals = p_dist.ppf(q, *p_params).eval()

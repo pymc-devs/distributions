@@ -1,11 +1,10 @@
-"""
-Test Normal distribution against scipy implementation.
-"""
+"""Test Normal distribution against scipy implementation."""
 
 import pytest
 from scipy import stats
+
 from distributions import normal as Normal
-from .helper_scipy import run_distribution_tests, make_params
+from tests.helper_scipy import make_params, run_distribution_tests
 
 
 @pytest.mark.parametrize(
@@ -19,7 +18,7 @@ from .helper_scipy import run_distribution_tests, make_params
     ],
 )
 def test_normal_vs_scipy(params, sp_params):
-    """Test Normal distribution against scipy"""
+    """Test Normal distribution against scipy."""
     p_params = make_params(*params)
     support = (-float("inf"), float("inf"))
 

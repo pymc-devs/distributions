@@ -1,8 +1,8 @@
 import pytensor.tensor as pt
 from pytensor.tensor.xlogx import xlogy0
 
-from .helper import cdf_bounds, discrete_entropy, sf_bounds
-from .optimization import find_ppf_discrete
+from distributions.helper import cdf_bounds, discrete_entropy, sf_bounds
+from distributions.optimization import find_ppf_discrete
 
 
 def mean(n, p):

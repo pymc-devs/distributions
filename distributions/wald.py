@@ -1,7 +1,7 @@
 import pytensor.tensor as pt
 
-from .helper import cdf_bounds
-from .optimization import find_ppf
+from distributions.helper import cdf_bounds
+from distributions.optimization import find_ppf
 
 
 def mean(mu, lam):

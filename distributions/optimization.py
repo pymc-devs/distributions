@@ -1,12 +1,12 @@
 import pytensor.tensor as pt
 
-from .helper import ppf_bounds_cont, ppf_bounds_disc
-from .normal import ppf as normal_ppf
+from distributions.helper import ppf_bounds_cont, ppf_bounds_disc
 
 
 def find_ppf(q, lower, upper, cdf, *params):
     """
     Compute the inverse CDF using the bisection method.
+
     Uses iterative expansion for infinite bounds.
 
     Note: We need to improve this method!!!

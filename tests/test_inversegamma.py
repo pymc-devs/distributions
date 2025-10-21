@@ -1,11 +1,10 @@
-"""
-Test InverseGamma distribution against scipy implementation.
-"""
+"""Test InverseGamma distribution against scipy implementation."""
 
 import pytest
 from scipy import stats
+
 from distributions import inversegamma as InverseGamma
-from .helper_scipy import run_distribution_tests, make_params
+from tests.helper_scipy import make_params, run_distribution_tests
 
 
 @pytest.mark.parametrize(

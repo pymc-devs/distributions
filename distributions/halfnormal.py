@@ -1,6 +1,6 @@
 import pytensor.tensor as pt
 
-from .helper import ppf_bounds_cont
+from distributions.helper import ppf_bounds_cont
 
 
 def mean(sigma):
