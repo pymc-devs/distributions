@@ -1,13 +1,10 @@
-"""
-Tests for the HalfStudentT distribution.
-"""
+"""Tests for the HalfStudentT distribution."""
 
 import pytest
-import numpy as np
 from scipy import stats
-from distributions import halfstudentt as HalfStudentT
-from .helper_scipy import run_distribution_tests, make_params
 
+from distributions import halfstudentt as HalfStudentT
+from tests.helper_scipy import make_params, run_distribution_tests
 
 # HalfStudentT is not defined in scipy
 test_cases = [

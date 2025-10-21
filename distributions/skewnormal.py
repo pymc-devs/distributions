@@ -1,8 +1,8 @@
 import pytensor.tensor as pt
 
-from .optimization import find_ppf
-from .halfnormal import entropy as halfnormal_entropy
-from .normal import entropy as normal_entropy
+from distributions.halfnormal import entropy as halfnormal_entropy
+from distributions.normal import entropy as normal_entropy
+from distributions.optimization import find_ppf
 
 
 def mean(mu, sigma, alpha):

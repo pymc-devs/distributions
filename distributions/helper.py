@@ -169,16 +169,12 @@ def discrete_entropy(min_x, max_x, logpdf, *params):
 
 
 def from_tau(tau):
-    """
-    Convert precision (tau) to standard deviation (sigma).
-    """
+    """Convert precision (tau) to standard deviation (sigma)."""
     sigma = 1 / pt.sqrt(tau)
     return sigma
 
 
 def to_tau(sigma):
-    """
-    Convert standard deviation (sigma) to precision (tau).
-    """
+    """Convert standard deviation (sigma) to precision (tau)."""
     tau = pt.power(sigma, -2)
     return tau

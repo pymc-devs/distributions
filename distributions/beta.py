@@ -3,7 +3,7 @@ from pytensor.tensor.math import betaincinv
 from pytensor.tensor.special import betaln
 from pytensor.tensor.xlogx import xlogy0
 
-from .helper import ppf_bounds_cont
+from distributions.helper import ppf_bounds_cont
 
 
 def mean(alpha, beta):

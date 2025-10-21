@@ -1,12 +1,11 @@
-"""
-Test Geometric distribution against scipy implementation.
-"""
+"""Test Geometric distribution against scipy implementation."""
 
-import pytest
 import pytensor.tensor as pt
+import pytest
 from scipy import stats
+
 from distributions import geometric as Geometric
-from .helper_scipy import run_distribution_tests
+from tests.helper_scipy import run_distribution_tests
 
 
 @pytest.mark.parametrize(

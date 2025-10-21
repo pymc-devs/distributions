@@ -1,7 +1,6 @@
 import pytensor.tensor as pt
-from pytensor.tensor.xlogx import xlogy0
 
-from .helper import cdf_bounds, ppf_bounds_disc
+from distributions.helper import cdf_bounds, ppf_bounds_disc
 
 
 def mean(p):

@@ -1,11 +1,10 @@
-"""
-Test Laplace distribution against scipy implementation.
-"""
+"""Test Laplace distribution against scipy implementation."""
 
 import pytest
 from scipy import stats
+
 from distributions import laplace as Laplace
-from .helper_scipy import run_distribution_tests, make_params
+from tests.helper_scipy import make_params, run_distribution_tests
 
 
 @pytest.mark.parametrize(
@@ -18,7 +17,7 @@ from .helper_scipy import run_distribution_tests, make_params
     ],
 )
 def test_laplace_vs_scipy(params, sp_params):
-    """Test Laplace distribution against scipy"""
+    """Test Laplace distribution against scipy."""
     p_params = make_params(*params)
     support = (-float("inf"), float("inf"))
 

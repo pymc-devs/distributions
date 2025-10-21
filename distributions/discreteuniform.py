@@ -1,6 +1,6 @@
 import pytensor.tensor as pt
 
-from .helper import cdf_bounds, discrete_entropy, ppf_bounds_disc
+from distributions.helper import cdf_bounds, discrete_entropy, ppf_bounds_disc
 
 
 def mean(lower, upper):

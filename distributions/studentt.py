@@ -1,11 +1,11 @@
 import pytensor.tensor as pt
-from pytensor.tensor.special import betaln
 from pytensor.tensor.math import betaincinv
+from pytensor.tensor.special import betaln
 
-from .helper import ppf_bounds_cont
-from .normal import logcdf as normal_logpdf
-from .normal import cdf as normal_logcdf
-from .normal import entropy as normal_entropy
+from distributions.helper import ppf_bounds_cont
+from distributions.normal import cdf as normal_logcdf
+from distributions.normal import entropy as normal_entropy
+from distributions.normal import logcdf as normal_logpdf
 
 
 def mean(nu, mu, sigma):

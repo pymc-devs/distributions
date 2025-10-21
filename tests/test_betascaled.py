@@ -1,11 +1,10 @@
-"""
-Test BetaScaled distribution against scipy implementation.
-"""
+"""Test BetaScaled distribution against scipy implementation."""
 
 import pytest
 from scipy import stats
+
 from distributions import betascaled as BetaScaled
-from .helper_scipy import run_distribution_tests, make_params
+from tests.helper_scipy import make_params, run_distribution_tests
 
 
 @pytest.mark.parametrize(
