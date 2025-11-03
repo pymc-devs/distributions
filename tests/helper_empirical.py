@@ -20,6 +20,7 @@ def run_empirical_tests(
     kurtosis_rtol=1e-1,
     quantiles_rtol=1e-4,
     cdf_rtol=1e-4,
+    is_discrete=False,
 ):
     """Test a distribution against empirical samples for distributions not in scipy."""
     rng_p = pt.random.default_rng(1)
@@ -82,6 +83,8 @@ def run_empirical_tests(
             [support[1] + 2],
         ]
     )
+    if is_discrete:
+        extended_vals = extended_vals[1:]
 
     # PPF
     q = np.linspace(0.01, 0.99, 50)
@@ -96,7 +99,8 @@ def run_empirical_tests(
     )
     extended_expected_ppf = []
     if np.isfinite(support[0]):
-        extended_expected_ppf.append(support[0])
+        if not is_discrete:
+            extended_expected_ppf.append(support[0])
     else:
         extended_expected_ppf.append(np.nan)
     if np.isfinite(support[1]):
@@ -128,9 +132,13 @@ def run_empirical_tests(
     assert np.all(diffs >= -1e-4), "CDF is not monotonic"
 
     # CDF bounds
+    if is_discrete:
+        expected_cdf_values = [1.0, 0.0, 0.0, 1.0, 1.0]
+    else:
+        expected_cdf_values = [0.0, 1.0, 0.0, 0.0, 1.0, 1.0]
     assert_allclose(
         p_dist.cdf(extended_vals, *p_params).eval(),
-        [0.0, 1.0, 0.0, 0.0, 1.0, 1.0],
+        expected_cdf_values,
         err_msg=f"CDF bounds test failed with {param_info}",
     )
 
@@ -150,7 +158,10 @@ def run_empirical_tests(
     assert np.all(pdf_vals >= 0), "PDF has negative values"
 
     ## integrates to 1
-    result, _ = quad(lambda x: p_dist.pdf(x, *p_params).eval(), l_b, u_b)
+    if is_discrete:
+        result = pt.sum(p_dist.pdf(pt.arange(l_b, u_b + 1), *p_params)).eval()
+    else:
+        result, _ = quad(lambda x: p_dist.pdf(x, *p_params).eval(), l_b, u_b)
     assert np.abs(result - 1) < 0.01, f"PDF integral = {result}, should be 1"
 
     ## PDF is 0 outside support
@@ -164,25 +175,49 @@ def run_empirical_tests(
     )
 
     ## PDF-CDF inverse
-    x_mid = rvs[(rvs > support[0] + 1e-3) & (rvs < support[1] - 1e-3)]
-    cdf_plus = p_dist.cdf(x_mid + 1e-5, *p_params).eval()
-    cdf_minus = p_dist.cdf(x_mid - 1e-5, *p_params).eval()
-    numerical_pdf = (cdf_plus - cdf_minus) / (2 * 1e-5)
-    pdf_vals = p_dist.pdf(x_mid, *p_params).eval()
-
-    mask = np.abs(pdf_vals) > 1e-4
-    if np.any(mask):
-        rel_error = np.abs(numerical_pdf[mask] - pdf_vals[mask]) / (np.abs(pdf_vals[mask]) + 1e-10)
-        assert np.all(rel_error < 1e-3), (
-            f"PDF doesn't match CDF derivative. Max rel error: {np.max(rel_error)}"
+    if is_discrete:
+        x_vals = np.arange(
+            p_dist.ppf(0.001, *p_params).eval(), p_dist.ppf(0.999, *p_params).eval() + 1
         )
+        cdf_vals = p_dist.cdf(x_vals, *p_params).eval()
+        pmf_vals = p_dist.pdf(x_vals, *p_params).eval()
+
+        numerical_pmf = np.diff(cdf_vals, prepend=0)
+
+        mask = np.abs(pmf_vals) > 1e-8
+        if np.any(mask):
+            rel_error = np.abs(numerical_pmf[mask] - pmf_vals[mask]) / (
+                np.abs(pmf_vals[mask]) + 1e-10
+            )
+            assert np.all(rel_error < 1e-6), (
+                f"PMF doesn't match CDF jumps. Max rel error: {np.max(rel_error)}"
+            )
+
+    else:
+        x_mid = rvs[(rvs > support[0] + 1e-3) & (rvs < support[1] - 1e-3)]
+        cdf_plus = p_dist.cdf(x_mid + 1e-5, *p_params).eval()
+        cdf_minus = p_dist.cdf(x_mid - 1e-5, *p_params).eval()
+        numerical_pdf = (cdf_plus - cdf_minus) / (2 * 1e-5)
+        pdf_vals = p_dist.pdf(x_mid, *p_params).eval()
+
+        mask = np.abs(pdf_vals) > 1e-4
+        if np.any(mask):
+            rel_error = np.abs(numerical_pdf[mask] - pdf_vals[mask]) / (
+                np.abs(pdf_vals[mask]) + 1e-10
+            )
+            assert np.all(rel_error < 1e-3), (
+                f"PDF doesn't match CDF derivative. Max rel error: {np.max(rel_error)}"
+            )
 
     # PPF-CDF inverse
     x_vals = p_dist.ppf(q, *p_params).eval()
     p_recovered = p_dist.cdf(x_vals, *p_params).eval()
 
-    abs_error = np.abs(p_recovered - q)
-    assert np.all(abs_error < 1e-5), f"PPF-CDF inverse failed. Max error: {np.max(abs_error)}"
+    if is_discrete:
+        assert np.all(p_recovered >= q - 1e-10), "PPF-CDF inverse failed: CDF(ppf(q)) < q"
+    else:
+        abs_error = np.abs(p_recovered - q)
+        assert np.all(abs_error < 1e-5), f"PPF-CDF inverse failed. Max error: {np.max(abs_error)}"
 
     # CDF-SF complement
     cdf_vals = p_dist.cdf(rvs, *p_params).eval()
@@ -196,8 +231,15 @@ def run_empirical_tests(
     isf_vals = p_dist.isf(rvs, *p_params).eval()
     ppf_vals = p_dist.ppf(1 - rvs, *p_params).eval()
 
-    rel_error = np.abs(isf_vals - ppf_vals) / (np.abs(ppf_vals) + 1e-10)
-    assert np.all(rel_error < 1e-3), f"ISF != PPF(1-p). Max rel error: {np.max(rel_error)}"
+    if is_discrete:
+        diff = np.abs(isf_vals - ppf_vals)
+        diff = diff[~np.isnan(diff)]
+        assert np.all(diff <= 1), (
+            f"ISF and PPF(1-p) differ by more than 1 support step. Max diff: {np.max(diff)}"
+        )
+    else:
+        rel_error = np.abs(isf_vals - ppf_vals) / (np.abs(ppf_vals) + 1e-10)
+        assert np.all(rel_error < 1e-3), f"ISF != PPF(1-p). Max rel error: {np.max(rel_error)}"
 
     # Entropy
     logpdf_vals = p_dist.logpdf(rvs, *p_params).eval()

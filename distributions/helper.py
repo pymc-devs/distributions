@@ -168,6 +168,69 @@ def discrete_entropy(min_x, max_x, logpdf, *params):
     return pt.squeeze(result) if broadcast_shape.ndim == 0 else result
 
 
+def discrete_moment(ppf, pdf, *params, order=1):
+    """
+    Compute central moments for discrete distributions by explicit summation.
+
+    Parameters
+    ----------
+    ppf : function
+        Percent-point function that takes (p, *params) as arguments
+    pdf : function
+        Probability mass function that takes (x, *params) as arguments
+    *params : tensor variables
+        Distribution parameters to pass to pdf
+    order : int
+        Order of the moment to compute
+
+    Returns
+    -------
+    moment : tensor
+    """
+    if len(params) == 1:
+        broadcast_shape = pt.as_tensor_variable(params[0])
+    else:
+        broadcast_shape = pt.broadcast_arrays(*params)[0]
+
+    min_x = ppf(0.0001, *params).min()
+    max_x = ppf(0.9999, *params).max() + 1
+
+    k_vals = pt.arange(min_x, max_x)
+    k_broadcast = k_vals.reshape((-1,) + (1,) * broadcast_shape.ndim)
+    pdf_vals = pdf(k_broadcast, *params)
+
+    result = pt.sum(k_broadcast * pdf_vals, axis=0)
+    if order > 1:
+        result = pt.sum((k_broadcast - result) ** order * pdf_vals, axis=0)
+
+    return pt.squeeze(result) if broadcast_shape.ndim == 0 else result
+
+
+def discrete_mean(ppf, pdf, *params):
+    """Compute mean for discrete distributions."""
+    return discrete_moment(ppf, pdf, *params, order=1)
+
+
+def discrete_variance(ppf, pdf, *params):
+    """Compute variance for discrete distributions."""
+    return discrete_moment(ppf, pdf, *params, order=2)
+
+
+def discrete_skewness(ppf, pdf, *params):
+    """Compute skewness for discrete distributions."""
+    variance = discrete_moment(ppf, pdf, *params, order=2)
+    third_moment = discrete_moment(ppf, pdf, *params, order=3)
+    return third_moment / (variance**1.5)
+
+
+def discrete_kurtosis(ppf, pdf, *params):
+    """Compute kurtosis for discrete distributions."""
+    variance = discrete_moment(ppf, pdf, *params, order=2)
+    fourth_moment = discrete_moment(ppf, pdf, *params, order=4)
+    result = fourth_moment / (variance**2) - 3
+    return result
+
+
 def from_tau(tau):
     """Convert precision (tau) to standard deviation (sigma)."""
     sigma = 1 / pt.sqrt(tau)
