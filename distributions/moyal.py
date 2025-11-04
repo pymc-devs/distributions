@@ -13,7 +13,8 @@ def mode(mu, sigma):
 
 
 def median(mu, sigma):
-    return mu + sigma * 0.7875976
+    shape = pt.broadcast_arrays(mu, sigma)[0]
+    return pt.full_like(shape, mu + sigma * 0.7875976)
 
 
 def var(mu, sigma):
