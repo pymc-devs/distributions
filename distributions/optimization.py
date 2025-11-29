@@ -1,3 +1,5 @@
+import math
+
 import pytensor.tensor as pt
 
 from distributions.helper import ppf_bounds_cont, ppf_bounds_disc
@@ -48,15 +50,57 @@ def find_ppf(q, lower, upper, cdf, *params):
     return ppf_bounds_cont(0.5 * (left + right), q, lower, upper)
 
 
+def _is_unbounded(upper):
+    """Check if upper bound is infinite at Python level."""
+    # Check for Python float infinity
+    if isinstance(upper, float) and math.isinf(upper):
+        return True
+    # Check for numpy infinity
+    try:
+        import numpy as np
+
+        if isinstance(upper, (np.floating, np.integer)) and np.isinf(upper):
+            return True
+    except (ImportError, TypeError):
+        pass
+    return False
+
+
 def find_ppf_discrete(q, lower, upper, cdf, *params):
     """
-    Compute the inverse CDF using the bisection method.
+    Compute the inverse CDF for discrete distributions.
 
-    The continuous bisection method finds where CDF(x) ≈ q. For discrete distributions,
-    we round to the nearest integer and then check if we need to adjust.
+    For bounded support, uses direct search over all values (fast).
+    For unbounded support, uses bisection method (works with infinite bounds).
     """
-    rounded_k = pt.round(find_ppf(q, lower, upper, cdf, *params))
-    # return ppf_bounds_disc(rounded_k, q, lower, upper)
-    cdf_k = cdf(rounded_k, *params)
-    rounded_k = pt.switch(pt.lt(cdf_k, q), rounded_k + 1, rounded_k)
-    return ppf_bounds_disc(rounded_k, q, lower, upper)
+    if _is_unbounded(upper):
+        # Unbounded case: use bisection method
+        rounded_k = pt.round(find_ppf(q, lower, upper, cdf, *params))
+        cdf_k = cdf(rounded_k, *params)
+        rounded_k = pt.switch(pt.lt(cdf_k, q), rounded_k + 1, rounded_k)
+        return ppf_bounds_disc(rounded_k, q, lower, upper)
+
+    # Bounded case: direct search over all values
+    q = pt.as_tensor_variable(q)
+
+    # Create array of all possible values in support
+    k_vals = pt.arange(lower, upper + 1)
+
+    # Compute CDF for all values - shape: (n_support,)
+    cdf_vals = cdf(k_vals, *params)
+
+    # Use a small tolerance for floating point comparison
+    eps = 1e-10
+
+    if q.ndim == 0:
+        # Scalar case
+        exceeds_q = pt.ge(cdf_vals, q - eps)
+        first_idx = pt.argmax(exceeds_q)
+        result = k_vals[first_idx]
+    else:
+        # Array case - need broadcasting
+        exceeds_q = pt.ge(cdf_vals[:, None], q[None, :] - eps)
+        first_idx = pt.argmax(exceeds_q, axis=0)
+        result = k_vals[first_idx]
+
+    return ppf_bounds_disc(result, q, lower, upper)

@@ -9,11 +9,35 @@ def mean(n, alpha, beta):
 
 
 def mode(n, alpha, beta):
-    return pt.clip(
-        pt.floor((n + 1) * ((alpha - 1) / (alpha + beta - 2))),
-        0,
-        n,
+    # The standard formula only applies when alpha > 1 and beta > 1
+    # For other cases, the mode is at the boundaries or distribution is uniform
+    standard_mode = pt.floor((n + 1) * ((alpha - 1) / (alpha + beta - 2)))
+
+    # Handle different cases:
+    # - alpha < 1 and beta < 1: U-shaped, modes at 0 and n (return 0)
+    # - alpha <= 1 and beta > 1: mode at 0
+    # - alpha > 1 and beta <= 1: mode at n
+    # - alpha = beta = 1: uniform, any value valid (return floor(n/2))
+    # - alpha > 1 and beta > 1: use standard formula
+
+    result = pt.switch(
+        pt.and_(pt.gt(alpha, 1), pt.gt(beta, 1)),
+        # Standard case: alpha > 1 and beta > 1
+        pt.clip(standard_mode, 0, n),
+        pt.switch(
+            pt.and_(pt.le(alpha, 1), pt.le(beta, 1)),
+            # Both <= 1: U-shaped or uniform, mode at boundary (use 0)
+            0,
+            pt.switch(
+                pt.le(alpha, 1),
+                # alpha <= 1, beta > 1: mode at 0
+                0,
+                # alpha > 1, beta <= 1: mode at n
+                n,
+            ),
+        ),
     )
+    return result
 
 
 def median(n, alpha, beta):
