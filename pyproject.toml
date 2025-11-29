@@ -47,7 +47,7 @@ addopts = [
     "--strict-markers",
     "--strict-config",
     "--color=yes",
-    "--cov=src",
+    "--cov=distributions",
     "--cov=tests",
     "--cov-report=term-missing",
 ]
