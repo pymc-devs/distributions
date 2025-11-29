@@ -1,0 +1,122 @@
+import pytensor.tensor as pt
+
+from distributions import binomial as Binomial
+from distributions.helper import cdf_bounds, discrete_entropy
+from distributions.optimization import find_ppf_discrete
+
+
+def mean(psi, n, p):
+    return psi * n * p
+
+
+def mode(psi, n, p):
+    return pt.zeros_like(psi * n * p)
+
+
+def median(psi, n, p):
+    return ppf(0.5, psi, n, p)
+
+
+def var(psi, n, p):
+    base_mean = n * p
+    base_var = n * p * (1 - p)
+    return psi * (base_var + (1 - psi) * base_mean * base_mean)
+
+
+def std(psi, n, p):
+    return pt.sqrt(var(psi, n, p))
+
+
+def skewness(psi, n, p):
+    q = 1 - p
+    base_ex1 = n * p
+    base_ex2 = n * p * q + base_ex1 * base_ex1
+    base_ex3 = n * p * q * (1 - 2 * p) + 3 * n * n * p * p * q + base_ex1 * base_ex1 * base_ex1
+
+    ex1 = psi * base_ex1
+    ex2 = psi * base_ex2
+    ex3 = psi * base_ex3
+
+    mu_val = ex1
+    mu2 = ex2 - mu_val * mu_val
+    mu3 = ex3 - 3 * mu_val * ex2 + 2 * mu_val * mu_val * mu_val
+
+    return mu3 / pt.power(mu2, 1.5)
+
+
+def kurtosis(psi, n, p):
+    ex1_fact = n * p
+    ex2_fact = n * (n - 1) * p * p
+    ex3_fact = n * (n - 1) * (n - 2) * p * p * p
+    ex4_fact = n * (n - 1) * (n - 2) * (n - 3) * p * p * p * p
+
+    base_ex1 = ex1_fact
+    base_ex2 = ex2_fact + ex1_fact
+    base_ex3 = ex3_fact + 3 * ex2_fact + ex1_fact
+    base_ex4 = ex4_fact + 6 * ex3_fact + 7 * ex2_fact + ex1_fact
+
+    ex1 = psi * base_ex1
+    ex2 = psi * base_ex2
+    ex3 = psi * base_ex3
+    ex4 = psi * base_ex4
+
+    mu_val = ex1
+    mu2 = ex2 - mu_val * mu_val
+    mu4 = ex4 - 4 * mu_val * ex3 + 6 * mu_val * mu_val * ex2 - 3 * pt.power(mu_val, 4)
+
+    return mu4 / pt.power(mu2, 2) - 3
+
+
+def entropy(psi, n, p):
+    return discrete_entropy(0, n + 1, logpdf, psi, n, p)
+
+
+def pdf(x, psi, n, p):
+    return pt.exp(logpdf(x, psi, n, p))
+
+
+def logpdf(x, psi, n, p):
+    base_logpdf = Binomial.logpdf(x, n, p)
+
+    log_zero_prob = pt.log((1 - psi) + psi * pt.power(1 - p, n))
+
+    log_nonzero_prob = pt.log(psi) + base_logpdf
+
+    return pt.switch(
+        pt.or_(pt.lt(x, 0), pt.gt(x, n)),
+        -pt.inf,
+        pt.switch(pt.eq(x, 0), log_zero_prob, log_nonzero_prob),
+    )
+
+
+def cdf(x, psi, n, p):
+    base_cdf = Binomial.cdf(x, n, p)
+    zi_cdf = (1 - psi) + psi * base_cdf
+    return cdf_bounds(zi_cdf, x, 0, n)
+
+
+def ppf(q, psi, n, p):
+    params = (psi, n, p)
+    return find_ppf_discrete(q, 0, n, cdf, *params)
+
+
+def sf(x, psi, n, p):
+    return 1.0 - cdf(x, psi, n, p)
+
+
+def isf(q, psi, n, p):
+    return ppf(1.0 - q, psi, n, p)
+
+
+def rvs(psi, n, p, size=None, random_state=None):
+    base_samples = pt.random.binomial(n, p, size=size, rng=random_state)
+    mask = pt.random.bernoulli(psi, size=size)
+    return pt.cast(mask, "int64") * base_samples
+
+
+def logcdf(x, psi, n, p):
+    return pt.log(cdf(x, psi, n, p))
+
+
+def logsf(x, psi, n, p):
+    return pt.log1p(-cdf(x, psi, n, p))
