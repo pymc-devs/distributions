@@ -6,9 +6,7 @@ build-backend = "flit_core.buildapi"
 name = "distributions"
 readme = "README.md"
 requires-python = ">=3.11"
-authors = [
-    {name = "pymc-devs", email = "pymc.devs@gmail.com"}
-]
+authors = [{ name = "pymc-devs", email = "pymc.devs@gmail.com" }]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
@@ -23,10 +21,11 @@ classifiers = [
 ]
 dynamic = ["version"]
 description = "PyTensor powered distributions."
-dependencies = [
-  "numpy>=2.0",
-  "pytensor>=2.32.0",
-]
+dependencies = ["numpy>=2.0", "pytensor>=2.32.0"]
+
+
+[project.optional-dependencies]
+test = ["pytest", "pytest-cov"]
 
 [tool.flit.module]
 name = "distributions"
@@ -38,22 +37,19 @@ documentation = "https://distributions.readthedocs.io"
 funding = "https://opencollective.com/pymc"
 
 
-[tool.black]
-line-length = 100
-
-[tool.isort]
-profile = "black"
-include_trailing_comma = true
-use_parentheses = true
-multi_line_output = 3
-line_length = 100
-
 [tool.pydocstyle]
 convention = "numpy"
 
 [tool.pytest.ini_options]
-testpaths = [
-    "tests",
+testpaths = ["tests"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--strict-config",
+    "--color=yes",
+    "--cov=src",
+    "--cov=tests",
+    "--cov-report=term-missing",
 ]
 
 [tool.ruff]
@@ -61,23 +57,23 @@ line-length = 100
 
 [tool.ruff.lint]
 select = [
-    "F",  # Pyflakes
-    "E",  # Pycodestyle
-    "W",  # Pycodestyle
-    "D",  # pydocstyle
+    "F",   # Pyflakes
+    "E",   # Pycodestyle
+    "W",   # Pycodestyle
+    "D",   # pydocstyle
     "NPY", # numpy specific rules
     "UP",  # pyupgrade
-    "I",  # isort
+    "I",   # isort
     "PL",  # Pylint
-    "TID",  # Absolute imports
+    "TID", # Absolute imports
 ]
 ignore = [
-    "PLR0912",  # too many branches
-    "PLR0913",  # too many arguments
-    "PLR2004",  # magic value comparison
-    "PLR0915",  # too many statements
-    "PLC0415",  # import outside of top level
-    "D1"    # Missing docstring
+    "PLR0912", # too many branches
+    "PLR0913", # too many arguments
+    "PLR2004", # magic value comparison
+    "PLR0915", # too many statements
+    "PLC0415", # import outside of top level
+    "D1",      # Missing docstring
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -90,7 +86,7 @@ ignore = [
 convention = "numpy"
 
 [tool.ruff.lint.flake8-tidy-imports]
-ban-relative-imports = "all"  # Disallow all relative imports.
+ban-relative-imports = "all" # Disallow all relative imports.
 
 [tool.ruff.format]
 docstring-code-format = false
