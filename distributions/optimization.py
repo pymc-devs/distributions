@@ -1,5 +1,3 @@
-import math
-
 import pytensor.tensor as pt
 
 from distributions.helper import ppf_bounds_cont, ppf_bounds_disc
@@ -51,19 +49,16 @@ def find_ppf(q, lower, upper, cdf, *params):
 
 
 def _is_unbounded(upper):
-    """Check if upper bound is infinite at Python level."""
-    # Check for Python float infinity
-    if isinstance(upper, float) and math.isinf(upper):
-        return True
-    # Check for numpy infinity
-    try:
-        import numpy as np
+    """Check if upper bound is infinite using pytensor.
 
-        if isinstance(upper, (np.floating, np.integer)) and np.isinf(upper):
-            return True
-    except (ImportError, TypeError):
-        pass
-    return False
+    Evaluates pt.isinf at graph-build time for constants.
+    For symbolic expressions, assumes unbounded (safe default for bisection).
+    """
+    try:
+        upper_t = pt.as_tensor_variable(upper)
+        return bool(pt.isinf(upper_t).eval())
+    except Exception:
+        return True
 
 
 def find_ppf_discrete(q, lower, upper, cdf, *params):
