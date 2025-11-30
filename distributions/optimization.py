@@ -1,3 +1,5 @@
+import math
+
 import pytensor.tensor as pt
 
 from distributions.helper import ppf_bounds_cont, ppf_bounds_disc
@@ -48,16 +50,33 @@ def find_ppf(q, lower, upper, cdf, *params):
     return ppf_bounds_cont(0.5 * (left + right), q, lower, upper)
 
 
-def _is_unbounded(upper):
-    """Check if upper bound is infinite using pytensor.
+def _should_use_bisection(lower, upper, max_direct_search_size=10_000):
+    """Check if bisection should be used instead of direct search.
 
-    Evaluates pt.isinf at graph-build time for constants.
-    For symbolic expressions, assumes unbounded (safe default for bisection).
+    Uses bisection if:
+    - Upper bound is infinite
+    - Range is too wide (> max_direct_search_size)
+    - Values cannot be evaluated at graph-build time
+
+    Evaluates bounds at graph-build time for constants.
     """
     try:
+        lower_t = pt.as_tensor_variable(lower)
         upper_t = pt.as_tensor_variable(upper)
-        return bool(pt.isinf(upper_t).eval())
+        lower_val = float(lower_t.eval())
+        upper_val = float(upper_t.eval())
+
+        # Check for infinite bounds
+        if not (math.isfinite(lower_val) and math.isfinite(upper_val)):
+            return True
+
+        # Check if range is too wide
+        if (upper_val - lower_val) > max_direct_search_size:
+            return True
+
+        return False
     except Exception:
+        # If evaluation fails, use bisection as safe default
         return True
 
 
@@ -65,17 +84,17 @@ def find_ppf_discrete(q, lower, upper, cdf, *params):
     """
     Compute the inverse CDF for discrete distributions.
 
-    For bounded support, uses direct search over all values (fast).
-    For unbounded support, uses bisection method (works with infinite bounds).
+    For narrow bounded support, uses direct search over all values (fast).
+    For unbounded or wide support, uses bisection method.
     """
-    if _is_unbounded(upper):
-        # Unbounded case: use bisection method
+    if _should_use_bisection(lower, upper):
+        # Use bisection method for unbounded or wide ranges
         rounded_k = pt.round(find_ppf(q, lower, upper, cdf, *params))
         cdf_k = cdf(rounded_k, *params)
         rounded_k = pt.switch(pt.lt(cdf_k, q), rounded_k + 1, rounded_k)
         return ppf_bounds_disc(rounded_k, q, lower, upper)
 
-    # Bounded case: direct search over all values
+    # Bounded case with narrow range: direct search over all values
     q = pt.as_tensor_variable(q)
 
     # Create array of all possible values in support
