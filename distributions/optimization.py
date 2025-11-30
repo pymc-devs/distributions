@@ -50,21 +50,29 @@ def find_ppf(q, lower, upper, cdf, *params):
     return ppf_bounds_cont(0.5 * (left + right), q, lower, upper)
 
 
+def _get_constant_value(x):
+    """Extract numeric value from a constant (pytensor or Python scalar).
+
+    Returns the float value if x is a constant, raises exception otherwise.
+    """
+    # PyTensor constant - access underlying data directly
+    if hasattr(x, "data"):
+        return float(x.data)
+    # Python/numpy scalar - convert directly
+    return float(x)
+
+
 def _should_use_bisection(lower, upper, max_direct_search_size=10_000):
     """Check if bisection should be used instead of direct search.
 
     Uses bisection if:
-    - Upper bound is infinite
+    - Bounds are infinite
     - Range is too wide (> max_direct_search_size)
-    - Values cannot be evaluated at graph-build time
-
-    Evaluates bounds at graph-build time for constants.
+    - Bounds are symbolic (not constants)
     """
     try:
-        lower_t = pt.as_tensor_variable(lower)
-        upper_t = pt.as_tensor_variable(upper)
-        lower_val = float(lower_t.eval())
-        upper_val = float(upper_t.eval())
+        lower_val = _get_constant_value(lower)
+        upper_val = _get_constant_value(upper)
 
         # Check for infinite bounds
         if not (math.isfinite(lower_val) and math.isfinite(upper_val)):
@@ -76,7 +84,7 @@ def _should_use_bisection(lower, upper, max_direct_search_size=10_000):
 
         return False
     except Exception:
-        # If evaluation fails, use bisection as safe default
+        # If extraction fails (symbolic tensor), use bisection as safe default
         return True
 
 
