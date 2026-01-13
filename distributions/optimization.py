@@ -60,3 +60,42 @@ def find_ppf_discrete(q, lower, upper, cdf, *params):
     cdf_k = cdf(rounded_k, *params)
     rounded_k = pt.switch(pt.lt(cdf_k, q), rounded_k + 1, rounded_k)
     return ppf_bounds_disc(rounded_k, q, lower, upper)
+
+
+def von_mises_ppf(q, mu, kappa, cdf_func):
+    """
+    Compute the percent point function (inverse CDF) of von Mises distribution.
+
+    Parameters
+    ----------
+    q : tensor
+        Quantile values (between 0 and 1)
+    mu : tensor
+        Mean direction (location parameter)
+    kappa : tensor
+        Concentration parameter
+    cdf_func : callable
+        CDF function with signature cdf_func(x, mu, kappa) -> cdf_value
+
+    Returns
+    -------
+    tensor
+        PPF values (angles) in the range [-pi, pi]
+    """
+    left = -pt.pi * pt.ones_like(q)
+    right = pt.pi * pt.ones_like(q)
+
+    for _ in range(10):
+        mid = 0.5 * (left + right)
+        f_mid = cdf_func(mid, mu, kappa) - q
+
+        left = pt.switch(f_mid < 0, mid, left)
+        right = pt.switch(f_mid < 0, right, mid)
+
+    result = 0.5 * (left + right)
+
+    result = pt.switch(q < 0, pt.nan, result)
+    result = pt.switch(q > 1, pt.nan, result)
+    result = pt.switch(pt.eq(q, 0), -pt.inf, result)
+    result = pt.switch(pt.eq(q, 1), pt.inf, result)
+    return result

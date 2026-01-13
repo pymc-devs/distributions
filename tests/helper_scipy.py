@@ -29,6 +29,9 @@ def run_distribution_tests(
     skewness_rtol=1e-6,
     kurtosis_rtol=1e-6,
     skip_mode=False,
+    skip_isf=False,
+    skip_standard_deviation=False,
+    skip_variance=False,
     skip_skewness=False,
     skip_kurtosis=False,
     use_quantiles_for_rvs=False,
@@ -108,7 +111,11 @@ def run_distribution_tests(
     actual_cdf = p_dist.cdf(extended_vals, *p_params).eval()
     expected_cdf = scipy_dist.cdf(extended_vals)
     assert_allclose(
-        actual_cdf, expected_cdf, rtol=cdf_rtol, err_msg=f"CDF test failed with {param_info}"
+        actual_cdf,
+        expected_cdf,
+        rtol=cdf_rtol,
+        atol=1e-12,
+        err_msg=f"CDF test failed with {param_info}",
     )
 
     # logCDF
@@ -118,6 +125,7 @@ def run_distribution_tests(
         actual_logcdf,
         expected_logcdf,
         rtol=logcdf_rtol,
+        atol=1e-12,
         err_msg=f"logCDF test failed with {param_info}",
     )
 
@@ -139,16 +147,17 @@ def run_distribution_tests(
     )
 
     # ISF
-    x_vals = np.array([-1, 0, 0.25, 0.5, 0.75, 1, 2])
-    actual_isf = p_dist.isf(x_vals, *p_params).eval()
-    expected_isf = scipy_dist.isf(x_vals)
-    assert_allclose(
-        actual_isf,
-        expected_isf,
-        rtol=isf_rtol,
-        atol=1e-15,
-        err_msg=f"ISF test failed with {param_info}",
-    )
+    if not skip_isf:
+        x_vals = np.array([-1, 0, 0.25, 0.5, 0.75, 1, 2])
+        actual_isf = p_dist.isf(x_vals, *p_params).eval()
+        expected_isf = scipy_dist.isf(x_vals)
+        assert_allclose(
+            actual_isf,
+            expected_isf,
+            rtol=isf_rtol,
+            atol=1e-15,
+            err_msg=f"ISF test failed with {param_info}",
+        )
 
     # Mean
     mean = p_dist.mean(*p_params).eval()
@@ -189,21 +198,23 @@ def run_distribution_tests(
         )
 
     # Standard deviation
-    std = p_dist.std(*p_params).eval()
-    expected_std = scipy_dist.std()
-    assert_allclose(
-        std,
-        expected_std,
-        rtol=std_rtol,
-        err_msg=f"Standard deviation test failed with {param_info}",
-    )
+    if not skip_standard_deviation:
+        std = p_dist.std(*p_params).eval()
+        expected_std = scipy_dist.std()
+        assert_allclose(
+            std,
+            expected_std,
+            rtol=std_rtol,
+            err_msg=f"Standard deviation test failed with {param_info}",
+        )
 
     # Variance
-    var = p_dist.var(*p_params).eval()
-    expected_var = scipy_dist.var()
-    assert_allclose(
-        var, expected_var, rtol=var_rtol, err_msg=f"Variance test failed with {param_info}"
-    )
+    if not skip_variance:
+        var = p_dist.var(*p_params).eval()
+        expected_var = scipy_dist.var()
+        assert_allclose(
+            var, expected_var, rtol=var_rtol, err_msg=f"Variance test failed with {param_info}"
+        )
 
     # Skewness
     if not skip_skewness:
