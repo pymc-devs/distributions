@@ -50,42 +50,52 @@ def find_ppf(q, lower, upper, cdf, *params):
     return ppf_bounds_cont(0.5 * (left + right), q, lower, upper)
 
 
-def _get_constant_value(x):
-    """Extract numeric value from a constant (pytensor or Python scalar).
-
-    Returns the float value if x is a constant, raises exception otherwise.
-    """
-    # PyTensor constant - access underlying data directly
-    if hasattr(x, "data"):
-        return float(x.data)
-    # Python/numpy scalar - convert directly
-    return float(x)
-
-
 def _should_use_bisection(lower, upper, max_direct_search_size=10_000):
-    """Check if bisection should be used instead of direct search.
+    """Compile-time check to select PPF algorithm for discrete distributions.
 
-    Uses bisection if:
-    - Bounds are infinite
-    - Range is too wide (> max_direct_search_size)
-    - Bounds are symbolic (not constants)
+    This function inspects bounds at graph-construction time to choose between:
+    - Direct search: Fast for narrow bounded support (e.g., BetaBinomial, Binomial)
+    - Bisection: Required for unbounded or wide support (e.g., Poisson, NegativeBinomial)
+
+    The check happens at Python level during graph construction, not during
+    PyTensor execution. This is intentional: a fully symbolic approach using
+    pt.switch would evaluate both branches, causing performance issues.
+
+    Parameters
+    ----------
+    lower : int, float, or PyTensor constant
+        Lower bound of the distribution support
+    upper : int, float, or PyTensor constant
+        Upper bound of the distribution support
+    max_direct_search_size : int, default 10_000
+        Maximum range size for direct search. Larger ranges use bisection.
+
+    Returns
+    -------
+    bool
+        True if bisection should be used, False for direct search.
     """
     try:
-        lower_val = _get_constant_value(lower)
-        upper_val = _get_constant_value(upper)
+        # Extract constant values at graph-build time
+        if hasattr(lower, "data"):
+            lower_val = float(lower.data)
+        else:
+            lower_val = float(lower)
 
-        # Check for infinite bounds
-        if not (math.isfinite(lower_val) and math.isfinite(upper_val)):
-            return True
-
-        # Check if range is too wide
-        if (upper_val - lower_val) > max_direct_search_size:
-            return True
-
-        return False
-    except Exception:
-        # If extraction fails (symbolic tensor), use bisection as safe default
+        if hasattr(upper, "data"):
+            upper_val = float(upper.data)
+        else:
+            upper_val = float(upper)
+    except (TypeError, ValueError):
+        # Symbolic (non-constant) bounds - use bisection as safe default
         return True
+
+    # Check for infinite bounds
+    if not (math.isfinite(lower_val) and math.isfinite(upper_val)):
+        return True
+
+    # Check if range exceeds threshold
+    return (upper_val - lower_val) > max_direct_search_size
 
 
 def find_ppf_discrete(q, lower, upper, cdf, *params):
@@ -126,11 +136,6 @@ def find_ppf_discrete(q, lower, upper, cdf, *params):
         result = k_vals[first_idx]
 
     return ppf_bounds_disc(result, q, lower, upper)
-    rounded_k = pt.round(find_ppf(q, lower, upper, cdf, *params))
-    # return ppf_bounds_disc(rounded_k, q, lower, upper)
-    cdf_k = cdf(rounded_k, *params)
-    rounded_k = pt.switch(pt.lt(cdf_k, q), rounded_k + 1, rounded_k)
-    return ppf_bounds_disc(rounded_k, q, lower, upper)
 
 
 def von_mises_ppf(q, mu, kappa, cdf_func):
