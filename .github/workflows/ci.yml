@@ -22,13 +22,13 @@ jobs:
       matrix:
         python-version: ["3.13"]
 
-    name: Set up Python ${{ matrix.python-version }}
+    name: Test ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Setup environment ${{ matrix.python-version }}
         uses: conda-incubator/setup-miniconda@v2
         with:
           channels: conda-forge, defaults
