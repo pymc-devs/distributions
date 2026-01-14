@@ -19,8 +19,8 @@ def median(psi, n, p):
 
 def var(psi, n, p):
     base_mean = n * (1 - p) / p
-    base_var = n * (1 - p) / (p * p)
-    return psi * (base_var + (1 - psi) * base_mean * base_mean)
+    base_var = n * (1 - p) / pt.power(p, 2)
+    return psi * (base_var + (1 - psi) * pt.power(base_mean, 2))
 
 
 def std(psi, n, p):
@@ -30,8 +30,8 @@ def std(psi, n, p):
 def skewness(psi, n, p):
     q = 1 - p
     ex1_fact = n * q / p
-    ex2_fact = n * (n + 1) * q * q / (p * p)
-    ex3_fact = n * (n + 1) * (n + 2) * q * q * q / (p * p * p)
+    ex2_fact = n * (n + 1) * pt.power(q, 2) / pt.power(p, 2)
+    ex3_fact = n * (n + 1) * (n + 2) * pt.power(q, 3) / pt.power(p, 3)
 
     base_ex1 = ex1_fact
     base_ex2 = ex2_fact + ex1_fact
@@ -42,8 +42,8 @@ def skewness(psi, n, p):
     ex3 = psi * base_ex3
 
     mu_val = ex1
-    mu2 = ex2 - mu_val * mu_val
-    mu3 = ex3 - 3 * mu_val * ex2 + 2 * mu_val * mu_val * mu_val
+    mu2 = ex2 - pt.power(mu_val, 2)
+    mu3 = ex3 - 3 * mu_val * ex2 + 2 * pt.power(mu_val, 3)
 
     return mu3 / pt.power(mu2, 1.5)
 
@@ -51,9 +51,9 @@ def skewness(psi, n, p):
 def kurtosis(psi, n, p):
     q = 1 - p
     ex1_fact = n * q / p
-    ex2_fact = n * (n + 1) * q * q / (p * p)
-    ex3_fact = n * (n + 1) * (n + 2) * q * q * q / (p * p * p)
-    ex4_fact = n * (n + 1) * (n + 2) * (n + 3) * q * q * q * q / (p * p * p * p)
+    ex2_fact = n * (n + 1) * pt.power(q, 2) / pt.power(p, 2)
+    ex3_fact = n * (n + 1) * (n + 2) * pt.power(q, 3) / pt.power(p, 3)
+    ex4_fact = n * (n + 1) * (n + 2) * (n + 3) * pt.power(q, 4) / pt.power(p, 4)
 
     base_ex1 = ex1_fact
     base_ex2 = ex2_fact + ex1_fact
@@ -66,8 +66,8 @@ def kurtosis(psi, n, p):
     ex4 = psi * base_ex4
 
     mu_val = ex1
-    mu2 = ex2 - mu_val * mu_val
-    mu4 = ex4 - 4 * mu_val * ex3 + 6 * mu_val * mu_val * ex2 - 3 * pt.power(mu_val, 4)
+    mu2 = ex2 - pt.power(mu_val, 2)
+    mu4 = ex4 - 4 * mu_val * ex3 + 6 * pt.power(mu_val, 2) * ex2 - 3 * pt.power(mu_val, 4)
 
     return mu4 / pt.power(mu2, 2) - 3
 
@@ -125,7 +125,13 @@ def rvs(psi, n, p, size=None, random_state=None):
 
 
 def logcdf(x, psi, n, p):
-    return pt.log(cdf(x, psi, n, p))
+    base_cdf = NegativeBinomial.cdf(x, n, p)
+    result = pt.log1p(psi * (base_cdf - 1))
+    return pt.switch(
+        pt.or_(pt.lt(x, 0), pt.isinf(x)),
+        pt.switch(pt.lt(x, 0), -pt.inf, 0.0),
+        result,
+    )
 
 
 def logsf(x, psi, n, p):

@@ -18,7 +18,7 @@ def median(psi, mu):
 
 
 def var(psi, mu):
-    return psi * (mu + (1 - psi) * mu * mu)
+    return psi * (mu + (1 - psi) * pt.power(mu, 2))
 
 
 def std(psi, mu):
@@ -27,25 +27,25 @@ def std(psi, mu):
 
 def skewness(psi, mu):
     ex1 = psi * mu
-    ex2 = psi * (mu + mu * mu)
-    ex3 = psi * (mu + 3 * mu * mu + mu * mu * mu)
+    ex2 = psi * (mu + pt.power(mu, 2))
+    ex3 = psi * (mu + 3 * pt.power(mu, 2) + pt.power(mu, 3))
 
     mu_val = ex1
-    mu2 = ex2 - mu_val * mu_val
-    mu3 = ex3 - 3 * mu_val * ex2 + 2 * mu_val * mu_val * mu_val
+    mu2 = ex2 - pt.power(mu_val, 2)
+    mu3 = ex3 - 3 * mu_val * ex2 + 2 * pt.power(mu_val, 3)
 
     return mu3 / pt.power(mu2, 1.5)
 
 
 def kurtosis(psi, mu):
     ex1 = psi * mu
-    ex2 = psi * (mu + mu * mu)
-    ex3 = psi * (mu + 3 * mu * mu + mu * mu * mu)
-    ex4 = psi * (mu + 7 * mu * mu + 6 * mu * mu * mu + mu * mu * mu * mu)
+    ex2 = psi * (mu + pt.power(mu, 2))
+    ex3 = psi * (mu + 3 * pt.power(mu, 2) + pt.power(mu, 3))
+    ex4 = psi * (mu + 7 * pt.power(mu, 2) + 6 * pt.power(mu, 3) + pt.power(mu, 4))
 
     mu_val = ex1
-    mu2 = ex2 - mu_val * mu_val
-    mu4 = ex4 - 4 * mu_val * ex3 + 6 * mu_val * mu_val * ex2 - 3 * pt.power(mu_val, 4)
+    mu2 = ex2 - pt.power(mu_val, 2)
+    mu4 = ex4 - 4 * mu_val * ex3 + 6 * pt.power(mu_val, 2) * ex2 - 3 * pt.power(mu_val, 4)
 
     return mu4 / pt.power(mu2, 2) - 3
 
@@ -105,7 +105,13 @@ def rvs(psi, mu, size=None, random_state=None):
 
 
 def logcdf(x, psi, mu):
-    return pt.log(cdf(x, psi, mu))
+    base_cdf = Poisson.cdf(x, mu)
+    result = pt.log1p(psi * (base_cdf - 1))
+    return pt.switch(
+        pt.or_(pt.lt(x, 0), pt.isinf(x)),
+        pt.switch(pt.lt(x, 0), -pt.inf, 0.0),
+        result,
+    )
 
 
 def logsf(x, psi, mu):
