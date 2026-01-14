@@ -232,6 +232,83 @@ def discrete_kurtosis(ppf, pdf, *params):
     return result
 
 
+def continuous_moment(lower, upper, logpdf, *params, order=1, mean_val=None, n_points=1000):
+    """
+    Compute raw or central moments for continuous distributions using numerical integration.
+
+    Uses the trapezoidal rule for numerical integration.
+
+    Parameters
+    ----------
+    lower : float
+        Lower bound for integration
+    upper : float
+        Upper bound for integration
+    logpdf : function
+        Log probability density function that takes (x, *params) as arguments
+    *params : tensor variables
+        Distribution parameters to pass to logpdf
+    order : int
+        Order of the moment to compute
+    mean_val : tensor, optional
+        If provided, computes central moment around this mean.
+        If None, computes raw moment.
+    n_points : int
+        Number of integration points
+
+    Returns
+    -------
+    moment : tensor
+    """
+    if len(params) == 1:
+        broadcast_shape = pt.as_tensor_variable(params[0])
+    else:
+        broadcast_shape = pt.broadcast_arrays(*params)[0]
+
+    x_vals = pt.linspace(lower, upper, n_points)
+    x_broadcast = x_vals.reshape((-1,) + (1,) * broadcast_shape.ndim)
+    pdf_vals = pt.exp(logpdf(x_broadcast, *params))
+
+    if mean_val is not None:
+        # Central moment
+        integrand = (x_broadcast - mean_val) ** order * pdf_vals
+    else:
+        # Raw moment
+        integrand = x_broadcast**order * pdf_vals
+
+    dx = (upper - lower) / (n_points - 1)
+    result = dx * (0.5 * integrand[0] + pt.sum(integrand[1:-1], axis=0) + 0.5 * integrand[-1])
+
+    return pt.squeeze(result) if broadcast_shape.ndim == 0 else result
+
+
+def continuous_mean(lower, upper, logpdf, *params):
+    """Compute mean for continuous distributions."""
+    return continuous_moment(lower, upper, logpdf, *params, order=1)
+
+
+def continuous_variance(lower, upper, logpdf, *params):
+    """Compute variance for continuous distributions."""
+    mean_val = continuous_moment(lower, upper, logpdf, *params, order=1)
+    return continuous_moment(lower, upper, logpdf, *params, order=2, mean_val=mean_val)
+
+
+def continuous_skewness(lower, upper, logpdf, *params):
+    """Compute skewness for continuous distributions."""
+    mean_val = continuous_moment(lower, upper, logpdf, *params, order=1)
+    variance = continuous_moment(lower, upper, logpdf, *params, order=2, mean_val=mean_val)
+    third_central = continuous_moment(lower, upper, logpdf, *params, order=3, mean_val=mean_val)
+    return third_central / (pt.sqrt(variance) ** 3)
+
+
+def continuous_kurtosis(lower, upper, logpdf, *params):
+    """Compute excess kurtosis for continuous distributions."""
+    mean_val = continuous_moment(lower, upper, logpdf, *params, order=1)
+    variance = continuous_moment(lower, upper, logpdf, *params, order=2, mean_val=mean_val)
+    fourth_central = continuous_moment(lower, upper, logpdf, *params, order=4, mean_val=mean_val)
+    return fourth_central / (variance**2) - 3
+
+
 def from_tau(tau):
     """Convert precision (tau) to standard deviation (sigma)."""
     sigma = 1 / pt.sqrt(tau)

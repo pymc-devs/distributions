@@ -11,7 +11,7 @@ from tests.helper_scipy import make_params
     "params",
     [
         [0.0, 1.0],  # Standard logit-normal (centered)
-        [0.0, 0.5],  # Narrower distribution
+        [0.0, 0.001],  # Narrower distribution
         [1.0, 1.0],  # Shifted right (mode > 0.5)
         [-1.0, 1.0],  # Shifted left (mode < 0.5)
         [0.0, 2.0],  # Wider distribution (approaches U-shape)

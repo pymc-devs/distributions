@@ -1,6 +1,19 @@
 import pytensor.tensor as pt
 
-from distributions.helper import cdf_bounds, continuous_entropy, ppf_bounds_cont
+from distributions.helper import (
+    cdf_bounds,
+    continuous_entropy,
+    continuous_kurtosis,
+    continuous_mean,
+    continuous_skewness,
+    continuous_variance,
+    ppf_bounds_cont,
+)
+from distributions.normal import ppf as normal_ppf
+
+# Support bounds for logitnormal (open interval (0, 1))
+_LOWER = 0.001
+_UPPER = 0.999
 
 
 def _logit(x):
@@ -12,18 +25,7 @@ def _expit(y):
 
 
 def mean(mu, sigma):
-    shape = pt.broadcast_arrays(mu, sigma)[0]
-
-    x_values = pt.linspace(0.001, 0.999, 1000)
-    x_broadcast = x_values.reshape((-1,) + (1,) * shape.ndim)
-
-    pdf_vals = pt.exp(logpdf(x_broadcast, mu, sigma))
-    integrand = x_broadcast * pdf_vals
-
-    dx = 0.998 / 999
-    result = dx * (0.5 * integrand[0] + pt.sum(integrand[1:-1], axis=0) + 0.5 * integrand[-1])
-
-    return pt.squeeze(result) if shape.ndim == 0 else result
+    return continuous_mean(_LOWER, _UPPER, logpdf, mu, sigma)
 
 
 def mode(mu, sigma):
@@ -36,26 +38,7 @@ def median(mu, sigma):
 
 
 def var(mu, sigma):
-    shape = pt.broadcast_arrays(mu, sigma)[0]
-
-    x_values = pt.linspace(0.001, 0.999, 1000)
-    x_broadcast = x_values.reshape((-1,) + (1,) * shape.ndim)
-
-    pdf_vals = pt.exp(logpdf(x_broadcast, mu, sigma))
-
-    integrand_mean = x_broadcast * pdf_vals
-    dx = 0.998 / 999
-    mean_val = dx * (
-        0.5 * integrand_mean[0] + pt.sum(integrand_mean[1:-1], axis=0) + 0.5 * integrand_mean[-1]
-    )
-
-    integrand_x2 = x_broadcast**2 * pdf_vals
-    mean_x2 = dx * (
-        0.5 * integrand_x2[0] + pt.sum(integrand_x2[1:-1], axis=0) + 0.5 * integrand_x2[-1]
-    )
-
-    result = mean_x2 - mean_val**2
-    return pt.squeeze(result) if shape.ndim == 0 else result
+    return continuous_variance(_LOWER, _UPPER, logpdf, mu, sigma)
 
 
 def std(mu, sigma):
@@ -63,73 +46,15 @@ def std(mu, sigma):
 
 
 def skewness(mu, sigma):
-    shape = pt.broadcast_arrays(mu, sigma)[0]
-
-    x_values = pt.linspace(0.001, 0.999, 1000)
-    x_broadcast = x_values.reshape((-1,) + (1,) * shape.ndim)
-    pdf_vals = pt.exp(logpdf(x_broadcast, mu, sigma))
-    dx = 0.998 / 999
-
-    integrand_mean = x_broadcast * pdf_vals
-    mean_val = dx * (
-        0.5 * integrand_mean[0] + pt.sum(integrand_mean[1:-1], axis=0) + 0.5 * integrand_mean[-1]
-    )
-
-    integrand_x2 = x_broadcast**2 * pdf_vals
-    mean_x2 = dx * (
-        0.5 * integrand_x2[0] + pt.sum(integrand_x2[1:-1], axis=0) + 0.5 * integrand_x2[-1]
-    )
-
-    integrand_x3 = x_broadcast**3 * pdf_vals
-    mean_x3 = dx * (
-        0.5 * integrand_x3[0] + pt.sum(integrand_x3[1:-1], axis=0) + 0.5 * integrand_x3[-1]
-    )
-
-    variance = mean_x2 - mean_val**2
-    std_val = pt.sqrt(variance)
-    third_central = mean_x3 - 3 * mean_val * mean_x2 + 2 * mean_val**3
-
-    result = third_central / (std_val**3)
-    return pt.squeeze(result) if shape.ndim == 0 else result
+    return continuous_skewness(_LOWER, _UPPER, logpdf, mu, sigma)
 
 
 def kurtosis(mu, sigma):
-    shape = pt.broadcast_arrays(mu, sigma)[0]
-
-    x_values = pt.linspace(0.001, 0.999, 1000)
-    x_broadcast = x_values.reshape((-1,) + (1,) * shape.ndim)
-    pdf_vals = pt.exp(logpdf(x_broadcast, mu, sigma))
-    dx = 0.998 / 999
-
-    integrand_mean = x_broadcast * pdf_vals
-    mean_val = dx * (
-        0.5 * integrand_mean[0] + pt.sum(integrand_mean[1:-1], axis=0) + 0.5 * integrand_mean[-1]
-    )
-
-    integrand_x2 = x_broadcast**2 * pdf_vals
-    mean_x2 = dx * (
-        0.5 * integrand_x2[0] + pt.sum(integrand_x2[1:-1], axis=0) + 0.5 * integrand_x2[-1]
-    )
-
-    integrand_x3 = x_broadcast**3 * pdf_vals
-    mean_x3 = dx * (
-        0.5 * integrand_x3[0] + pt.sum(integrand_x3[1:-1], axis=0) + 0.5 * integrand_x3[-1]
-    )
-
-    integrand_x4 = x_broadcast**4 * pdf_vals
-    mean_x4 = dx * (
-        0.5 * integrand_x4[0] + pt.sum(integrand_x4[1:-1], axis=0) + 0.5 * integrand_x4[-1]
-    )
-
-    variance = mean_x2 - mean_val**2
-    fourth_central = mean_x4 - 4 * mean_val * mean_x3 + 6 * mean_val**2 * mean_x2 - 3 * mean_val**4
-
-    result = fourth_central / (variance**2) - 3
-    return pt.squeeze(result) if shape.ndim == 0 else result
+    return continuous_kurtosis(_LOWER, _UPPER, logpdf, mu, sigma)
 
 
 def entropy(mu, sigma):
-    return continuous_entropy(0.001, 0.999, logpdf, mu, sigma)
+    return continuous_entropy(_LOWER, _UPPER, logpdf, mu, sigma)
 
 
 def pdf(x, mu, sigma):
@@ -196,8 +121,7 @@ def logsf(x, mu, sigma):
 
 
 def ppf(q, mu, sigma):
-    normal_ppf = mu + sigma * pt.sqrt(2) * pt.erfinv(2 * q - 1)
-    return ppf_bounds_cont(_expit(normal_ppf), q, 0, 1)
+    return ppf_bounds_cont(_expit(normal_ppf(q, mu, sigma)), q, 0, 1)
 
 
 def isf(q, mu, sigma):
