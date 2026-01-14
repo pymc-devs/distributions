@@ -20,6 +20,10 @@ from tests.helper_scipy import run_distribution_tests
         # alpha > 1 and beta > 1: unique mode exists
         ([15, 5.0, 2.0], {"n": 15, "a": 5.0, "b": 2.0}, False),
         ([100, 20.0, 20.0], {"n": 100, "a": 20.0, "b": 20.0}, False),
+        # alpha = 1 and beta > 1: monotonically decreasing, unique mode at 0
+        ([10, 1.0, 3.0], {"n": 10, "a": 1.0, "b": 3.0}, False),
+        # alpha > 1 and beta = 1: monotonically increasing, unique mode at n
+        ([10, 3.0, 1.0], {"n": 10, "a": 3.0, "b": 1.0}, False),
     ],
 )
 def test_betabinomial_vs_scipy(params, sp_params, skip_mode):

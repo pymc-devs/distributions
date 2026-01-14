@@ -50,7 +50,17 @@ def find_ppf(q, lower, upper, cdf, *params):
     return ppf_bounds_cont(0.5 * (left + right), q, lower, upper)
 
 
-def _should_use_bisection(lower, upper, max_direct_search_size=10_000):
+def _is_scalar_param(param):
+    """Check if a parameter is a scalar (0-dimensional) at graph-build time."""
+    if hasattr(param, "ndim"):
+        return param.ndim == 0
+    # For Python scalars
+    import numpy as np
+
+    return np.ndim(param) == 0
+
+
+def _should_use_bisection(lower, upper, params, max_direct_search_size=10_000):
     """Compile-time check to select PPF algorithm for discrete distributions.
 
     This function inspects bounds at graph-construction time to choose between:
@@ -67,6 +77,9 @@ def _should_use_bisection(lower, upper, max_direct_search_size=10_000):
         Lower bound of the distribution support
     upper : int, float, or PyTensor constant
         Upper bound of the distribution support
+    params : tuple
+        Distribution parameters - if any are non-scalar, bisection is required
+        to handle broadcasting correctly.
     max_direct_search_size : int, default 10_000
         Maximum range size for direct search. Larger ranges use bisection.
 
@@ -75,6 +88,12 @@ def _should_use_bisection(lower, upper, max_direct_search_size=10_000):
     bool
         True if bisection should be used, False for direct search.
     """
+    # Check if any parameter is non-scalar (array) - direct search doesn't
+    # handle broadcasting correctly, so fall back to bisection
+    for param in params:
+        if not _is_scalar_param(param):
+            return True
+
     try:
         # Extract constant values at graph-build time
         if hasattr(lower, "data"):
@@ -105,7 +124,7 @@ def find_ppf_discrete(q, lower, upper, cdf, *params):
     For narrow bounded support, uses direct search over all values (fast).
     For unbounded or wide support, uses bisection method.
     """
-    if _should_use_bisection(lower, upper):
+    if _should_use_bisection(lower, upper, params):
         # Use bisection method for unbounded or wide ranges
         rounded_k = pt.round(find_ppf(q, lower, upper, cdf, *params))
         cdf_k = cdf(rounded_k, *params)

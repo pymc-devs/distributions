@@ -9,18 +9,28 @@ def mean(n, alpha, beta):
 
 
 def mode(n, alpha, beta):
-    # The standard formula only applies when alpha > 1 and beta > 1
-    # For other cases, the mode is not unique (U-shaped, monotonic, or uniform)
-    # Following the convention used in this package, return NaN when mode is not unique
-    standard_mode = pt.floor((n + 1) * ((alpha - 1) / (alpha + beta - 2)))
+    # The mode depends on the shape of the distribution:
+    # - alpha > 1, beta > 1: unimodal, standard formula applies
+    # - alpha = 1, beta > 1: monotonically decreasing, mode is 0
+    # - alpha > 1, beta = 1: monotonically increasing, mode is n
+    # - alpha = 1, beta = 1: uniform, no unique mode (return NaN)
+    # - alpha < 1 or beta < 1 (other cases): U-shaped or J-shaped, no unique mode (return NaN)
+    # This follows the same convention as distributions/beta.py
+    n_b, alpha_b, beta_b = pt.broadcast_arrays(n, alpha, beta)
+    result = pt.full_like(alpha_b, pt.nan, dtype="float64")
 
-    result = pt.switch(
-        pt.and_(pt.gt(alpha, 1), pt.gt(beta, 1)),
-        # Standard case: alpha > 1 and beta > 1 - unique mode exists
-        pt.clip(standard_mode, 0, n),
-        # Otherwise: mode is not unique, return NaN
-        pt.nan,
+    # Monotonically decreasing: alpha = 1 and beta > 1 -> mode is 0
+    result = pt.where(pt.eq(alpha_b, 1) & pt.gt(beta_b, 1), 0.0, result)
+    # Monotonically increasing: alpha > 1 and beta = 1 -> mode is n
+    result = pt.where(pt.gt(alpha_b, 1) & pt.eq(beta_b, 1), n_b, result)
+    # Standard unimodal case: alpha > 1 and beta > 1
+    standard_mode = pt.floor((n_b + 1) * ((alpha_b - 1) / (alpha_b + beta_b - 2)))
+    result = pt.where(
+        pt.gt(alpha_b, 1) & pt.gt(beta_b, 1),
+        pt.clip(standard_mode, 0, n_b),
+        result,
     )
+
     return result
 
 
