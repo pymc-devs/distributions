@@ -1,0 +1,137 @@
+import pytensor.tensor as pt
+from pytensor.tensor.xlogx import xlogx
+
+from distributions.helper import cdf_bounds, ppf_bounds_disc
+
+
+def _normalize_p(p):
+    p = pt.as_tensor_variable(p)
+    return p / pt.sum(p, axis=-1, keepdims=True)
+
+
+def _k(p):
+    return pt.shape(p)[-1]
+
+
+def _moments(p):
+    p = _normalize_p(p)
+    k = _k(p)
+    indices = pt.arange(k)
+    mu = pt.sum(indices * p, axis=-1, keepdims=True)
+    centered = indices - mu
+    var = pt.sum(centered**2 * p, axis=-1, keepdims=True)
+    return p, k, indices, mu, var
+
+
+def mean(p):
+    p = _normalize_p(p)
+    k = _k(p)
+    indices = pt.arange(k)
+    return pt.sum(indices * p, axis=-1)
+
+
+def mode(p):
+    p = _normalize_p(p)
+    return pt.argmax(p, axis=-1)
+
+
+def median(p):
+    return ppf(0.5, p)
+
+
+def var(p):
+    _, _, _, _, v = _moments(p)
+    return pt.squeeze(v)
+
+
+def std(p):
+    return pt.sqrt(var(p))
+
+
+def skewness(p):
+    p_norm, k, indices, mu, v = _moments(p)
+    centered = indices - mu
+    third = pt.sum(centered**3 * p_norm, axis=-1)
+    return third / (pt.squeeze(v) ** 1.5)
+
+
+def kurtosis(p):
+    p_norm, k, indices, mu, v = _moments(p)
+    centered = indices - mu
+    fourth = pt.sum(centered**4 * p_norm, axis=-1)
+    return fourth / (pt.squeeze(v) ** 2) - 3
+
+
+def entropy(p):
+    p = _normalize_p(p)
+    return -pt.sum(xlogx(p), axis=-1)
+
+
+def pdf(x, p):
+    return pt.exp(logpdf(x, p))
+
+
+def logpdf(x, p):
+    p = _normalize_p(p)
+    k = _k(p)
+    x = pt.as_tensor_variable(x)
+    x_int = pt.cast(x, "int64")
+    in_support = pt.and_(pt.ge(x, 0), pt.lt(x, k))
+    is_integer = pt.eq(x, pt.floor(x))
+    valid = pt.and_(in_support, is_integer)
+    safe_x = pt.clip(x_int, 0, k - 1)
+    
+    # Use mask for robust indexing across dimensions
+    indices = pt.arange(k)
+    mask = pt.eq(pt.shape_padright(safe_x), indices)
+    log_p = pt.log(pt.sum(p * mask, axis=-1))
+    
+    return pt.switch(valid, log_p, -pt.inf)
+
+
+def cdf(x, p):
+    p = _normalize_p(p)
+    k = _k(p)
+    x = pt.as_tensor_variable(x)
+    x_floor = pt.floor(x)
+    cumsum_p = pt.cumsum(p, axis=-1)
+    safe_x = pt.cast(pt.clip(x_floor, 0, k - 1), "int64")
+    
+    # Use mask for robust indexing across dimensions
+    indices = pt.arange(k)
+    mask = pt.eq(pt.shape_padright(safe_x), indices)
+    cdf_val = pt.sum(cumsum_p * mask, axis=-1)
+    
+    return cdf_bounds(cdf_val, x, 0, k - 1)
+
+
+def logcdf(x, p):
+    return pt.log(cdf(x, p))
+
+
+def sf(x, p):
+    return 1.0 - cdf(x, p)
+
+
+def logsf(x, p):
+    return pt.log1p(-cdf(x, p))
+
+
+def ppf(q, p):
+    p = _normalize_p(p)
+    k = _k(p)
+    q = pt.as_tensor_variable(q)
+    cumsum_p = pt.cumsum(p, axis=-1)
+    ge_mask = pt.ge(cumsum_p, pt.shape_padright(q))
+    masked_indices = pt.switch(ge_mask, pt.arange(k), k)
+    result = pt.min(masked_indices, axis=-1)
+    return ppf_bounds_disc(result, q, 0, k - 1)
+
+
+def isf(q, p):
+    return ppf(1.0 - q, p)
+
+
+def rvs(p, size=None, random_state=None):
+    p = _normalize_p(p)
+    return pt.random.categorical(p, size=size, rng=random_state)
