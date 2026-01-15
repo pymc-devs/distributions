@@ -70,7 +70,7 @@ def logpdf(x, p):
     is_integer = pt.eq(x, pt.floor(x))
     valid = pt.and_(in_support, is_integer)
     safe_x = pt.clip(x_int, 0, k - 1)
-    log_p = pt.take_along_axis(pt.log(p), safe_x[..., None], axis=-1)[..., 0]
+    log_p = pt.log(p)[safe_x]
     return pt.switch(valid, log_p, -pt.inf)
 
 
@@ -81,7 +81,7 @@ def cdf(x, p):
     x_floor = pt.floor(x)
     cumsum_p = pt.cumsum(p, axis=-1)
     safe_x = pt.cast(pt.clip(x_floor, 0, k - 1), "int64")
-    cdf_val = pt.take_along_axis(cumsum_p, safe_x[..., None], axis=-1)[..., 0]
+    cdf_val = cumsum_p[safe_x]
     return cdf_bounds(cdf_val, x, 0, k - 1)
 
 
