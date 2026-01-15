@@ -400,3 +400,27 @@ def von_mises_cdf(x, mu, kappa):
     result = result + ix
 
     return result
+
+
+def zi_mode(base_mode, logpdf, *params):
+    """
+    Compute mode for zero-inflated distributions.
+
+    Compares probability at x=0 vs probability at the base distribution's mode,
+    and returns whichever has higher probability.
+
+    Parameters
+    ----------
+    base_mode : tensor
+        The mode of the underlying (non-zero-inflated) distribution
+    logpdf : function
+        Log probability function of the ZI distribution that takes (x, *params)
+    *params : tensor variables
+        Parameters to pass to logpdf (typically psi, plus base distribution params)
+
+    Returns
+    -------
+    tensor
+        The mode value (either 0 or base_mode)
+    """
+    return pt.switch(logpdf(0, *params) >= logpdf(base_mode, *params), 0, base_mode)
