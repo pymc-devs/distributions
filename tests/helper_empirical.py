@@ -20,6 +20,7 @@ def run_empirical_tests(
     kurtosis_rtol=1e-1,
     quantiles_rtol=1e-4,
     cdf_rtol=1e-4,
+    pdf_cdf_rtol=1e-3,
     is_discrete=False,
 ):
     """Test a distribution against empirical samples for distributions not in scipy."""
@@ -205,7 +206,7 @@ def run_empirical_tests(
             rel_error = np.abs(numerical_pdf[mask] - pdf_vals[mask]) / (
                 np.abs(pdf_vals[mask]) + 1e-10
             )
-            assert np.all(rel_error < 1e-3), (
+            assert np.all(rel_error < pdf_cdf_rtol), (
                 f"PDF doesn't match CDF derivative. Max rel error: {np.max(rel_error)}"
             )
 

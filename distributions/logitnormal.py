@@ -1,44 +1,80 @@
+import numpy as np
 import pytensor.tensor as pt
 
 from distributions.helper import (
     cdf_bounds,
-    continuous_entropy,
-    continuous_kurtosis,
-    continuous_mean,
-    continuous_skewness,
-    continuous_variance,
     ppf_bounds_cont,
 )
 from distributions.normal import ppf as normal_ppf
-
-# Support bounds for logitnormal (open interval (0, 1))
-_LOWER = 0.001
-_UPPER = 0.999
 
 
 def _logit(x):
     return pt.log(x) - pt.log1p(-x)
 
 
-def _expit(y):
-    return pt.sigmoid(y)
+def _ghq_moments(mu, sigma, order=1, mean_val=None, n_points=70):
+    """
+    Compute moments of the logit-normal using Gauss-Hermite quadrature.
+
+    Based on https://en.wikipedia.org/wiki/Logit-normal_distribution#Moments
+    but using Gauss-Hermite quadrature for better accuracy.
+
+    Parameters
+    ----------
+    mu : tensor
+        Mean of underlying normal distribution
+    sigma : tensor
+        Standard deviation of underlying normal distribution
+    order : int
+        Order of the moment
+    mean_val : tensor, optional
+        If provided, compute central moment around this mean
+    n_points : int
+        Number of Gauss–Hermite nodes
+
+    Returns
+    -------
+    tensor
+        Estimated moment
+    """
+    gh_x, gh_w = np.polynomial.hermite.hermgauss(n_points)
+    gh_x = pt.as_tensor_variable(gh_x)
+    gh_w = pt.as_tensor_variable(gh_w)
+
+    broadcast_shape = pt.broadcast_arrays(mu, sigma)[0]
+
+    gh_x_bc = gh_x.reshape((-1,) + (1,) * broadcast_shape.ndim)
+    gh_w_bc = gh_w.reshape((-1,) + (1,) * broadcast_shape.ndim)
+
+    z = pt.sqrt(2.0) * sigma * gh_x_bc + mu
+    x_vals = pt.sigmoid(z)
+
+    if mean_val is not None:
+        integrand = (x_vals - mean_val) ** order
+    else:
+        integrand = x_vals**order
+
+    result = pt.sum(gh_w_bc * integrand, axis=0) / pt.sqrt(pt.pi)
+
+    return result
 
 
 def mean(mu, sigma):
-    return continuous_mean(_LOWER, _UPPER, logpdf, mu, sigma)
+    return _ghq_moments(mu, sigma, order=1)
 
 
 def mode(mu, sigma):
-    return _expit(mu)
+    return pt.sigmoid(mu)
 
 
 def median(mu, sigma):
     shape = pt.broadcast_arrays(mu, sigma)[0]
-    return pt.full_like(shape, _expit(mu))
+    return pt.full_like(shape, pt.sigmoid(mu))
 
 
 def var(mu, sigma):
-    return continuous_variance(_LOWER, _UPPER, logpdf, mu, sigma)
+    mean_val = _ghq_moments(mu, sigma, order=1)
+    return _ghq_moments(mu, sigma, order=2, mean_val=mean_val)
 
 
 def std(mu, sigma):
@@ -46,15 +82,37 @@ def std(mu, sigma):
 
 
 def skewness(mu, sigma):
-    return continuous_skewness(_LOWER, _UPPER, logpdf, mu, sigma)
+    mean_val = _ghq_moments(mu, sigma, order=1)
+    variance = _ghq_moments(mu, sigma, order=2, mean_val=mean_val)
+    third_central = _ghq_moments(mu, sigma, order=3, mean_val=mean_val)
+    return third_central / (pt.sqrt(variance) ** 3)
 
 
 def kurtosis(mu, sigma):
-    return continuous_kurtosis(_LOWER, _UPPER, logpdf, mu, sigma)
+    mean_val = _ghq_moments(mu, sigma, order=1)
+    variance = _ghq_moments(mu, sigma, order=2, mean_val=mean_val)
+    fourth_central = _ghq_moments(mu, sigma, order=4, mean_val=mean_val)
+    return fourth_central / (variance**2) - 3
 
 
 def entropy(mu, sigma):
-    return continuous_entropy(_LOWER, _UPPER, logpdf, mu, sigma)
+    gh_x, gh_w = np.polynomial.hermite.hermgauss(70)
+    gh_x = pt.as_tensor_variable(gh_x)
+    gh_w = pt.as_tensor_variable(gh_w)
+
+    broadcast_shape = pt.broadcast_arrays(mu, sigma)[0]
+
+    gh_x_bc = gh_x.reshape((-1,) + (1,) * broadcast_shape.ndim)
+    gh_w_bc = gh_w.reshape((-1,) + (1,) * broadcast_shape.ndim)
+
+    z = pt.sqrt(2.0) * sigma * gh_x_bc + mu
+    x_vals = pt.sigmoid(z)
+
+    integrand = -logpdf(x_vals, mu, sigma)
+
+    result = pt.sum(gh_w_bc * integrand, axis=0) / pt.sqrt(pt.pi)
+
+    return result
 
 
 def pdf(x, mu, sigma):
@@ -121,7 +179,7 @@ def logsf(x, mu, sigma):
 
 
 def ppf(q, mu, sigma):
-    return ppf_bounds_cont(_expit(normal_ppf(q, mu, sigma)), q, 0, 1)
+    return ppf_bounds_cont(pt.sigmoid(normal_ppf(q, mu, sigma)), q, 0, 1)
 
 
 def isf(q, mu, sigma):
@@ -129,4 +187,4 @@ def isf(q, mu, sigma):
 
 
 def rvs(mu, sigma, size=None, random_state=None):
-    return _expit(pt.random.normal(mu, sigma, rng=random_state, size=size))
+    return pt.sigmoid(pt.random.normal(mu, sigma, rng=random_state, size=size))

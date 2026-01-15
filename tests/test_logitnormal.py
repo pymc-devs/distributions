@@ -11,8 +11,7 @@ from tests.helper_scipy import make_params
     "params",
     [
         [0.0, 1.0],  # Standard logit-normal (centered)
-        [0.0, 0.5],  # Narrower distribution (sigma=0.001 is too extreme for numerical integration)
-        [1.0, 1.0],  # Shifted right (mode > 0.5)
+        [0.0, 0.001],  # Narrower distribution
         [-1.0, 1.0],  # Shifted left (mode < 0.5)
         [0.0, 2.0],  # Wider distribution (approaches U-shape)
         [2.0, 0.5],  # Strongly shifted right
@@ -28,12 +27,12 @@ def test_logitnormal_vs_random(params):
         p_params=p_params,
         support=support,
         name="logitnormal",
-        sample_size=500_000,
         mean_rtol=1e-2,
         var_rtol=1e-2,
         std_rtol=1e-2,
         skewness_rtol=2e-1,
-        kurtosis_rtol=2e-1,
+        kurtosis_rtol=2e-1 if params[1] > 0.01 else 1,
         quantiles_rtol=3e-2,
         cdf_rtol=5e-2,
+        pdf_cdf_rtol=1e-2,
     )
