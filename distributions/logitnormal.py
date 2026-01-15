@@ -12,7 +12,7 @@ def _logit(x):
     return pt.log(x) - pt.log1p(-x)
 
 
-def _ghq_moments(mu, sigma, order=1, mean_val=None, n_points=60):
+def _ghq_moments(mu, sigma, order=1, mean_val=None, n_points=70):
     """
     Compute moments of the logit-normal using Gauss-Hermite quadrature.
 
