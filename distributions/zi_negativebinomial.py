@@ -1,7 +1,7 @@
 import pytensor.tensor as pt
 
 from distributions import negativebinomial as NegativeBinomial
-from distributions.helper import cdf_bounds, discrete_entropy, sf_bounds
+from distributions.helper import cdf_bounds, discrete_entropy, sf_bounds, zi_mode
 from distributions.optimization import find_ppf_discrete
 
 
@@ -10,7 +10,8 @@ def mean(psi, n, p):
 
 
 def mode(psi, n, p):
-    return pt.zeros_like(psi * n * p)
+    base_mode = NegativeBinomial.mode(n, p)
+    return zi_mode(base_mode, logpdf, psi, n, p)
 
 
 def median(psi, n, p):

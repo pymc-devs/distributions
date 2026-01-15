@@ -1,7 +1,7 @@
 import pytensor.tensor as pt
 
 from distributions import poisson as Poisson
-from distributions.helper import cdf_bounds, discrete_entropy, sf_bounds
+from distributions.helper import cdf_bounds, discrete_entropy, sf_bounds, zi_mode
 from distributions.optimization import find_ppf_discrete
 
 
@@ -10,7 +10,8 @@ def mean(psi, mu):
 
 
 def mode(psi, mu):
-    return pt.zeros_like(psi * mu)
+    base_mode = Poisson.mode(mu)
+    return zi_mode(base_mode, logpdf, psi, mu)
 
 
 def median(psi, mu):
