@@ -26,7 +26,6 @@ def make_params(p, dtype="float64"):
 def test_categorical_empirical(probs):
     p_params = make_params(probs)
     k = len(probs)
-    support = (0, k - 1)
     sample_size = 500_000
     param_info = f"\nCategorical params: {probs}"
 
@@ -205,7 +204,6 @@ def test_categorical_unnormalized():
 def test_categorical_degenerate():
     """Test degenerate categorical (single outcome)."""
     p_params = make_params([1.0])
-    k = 1
 
     assert_allclose(Categorical.mean(*p_params).eval(), 0.0)
     assert_allclose(Categorical.var(*p_params).eval(), 0.0)
@@ -223,34 +221,30 @@ def test_categorical_two_outcomes():
     # Mean should be p for binary categorical with outcomes 0, 1
     assert_allclose(Categorical.mean(*p_params).eval(), p, rtol=1e-10)
 
+
 def test_categorical_batched():
     # Batched probabilities: (2, 3)
-    p = np.array([
-        [0.1, 0.2, 0.7],
-        [0.3, 0.4, 0.3]
-    ])
+    p = np.array([[0.1, 0.2, 0.7], [0.3, 0.4, 0.3]])
     # Batched x: (2,)
     x = np.array([2, 0])
-    
+
     p_pt = pt.as_tensor_variable(p)
     x_pt = pt.as_tensor_variable(x)
-    
+
     # Expected logpdf: [log(0.7), log(0.3)]
     expected_logpdf = np.log([0.7, 0.3])
     actual_logpdf = Categorical.logpdf(x_pt, p_pt).eval()
-    
+
     assert_allclose(actual_logpdf, expected_logpdf)
 
+
 def test_categorical_batched_moments():
-    p = np.array([
-        [0.1, 0.2, 0.7],
-        [0.3, 0.4, 0.3]
-    ])
+    p = np.array([[0.1, 0.2, 0.7], [0.3, 0.4, 0.3]])
     p_pt = pt.as_tensor_variable(p)
-    
+
     # Mean: 0*0.1 + 1*0.2 + 2*0.7 = 1.6
     #       0*0.3 + 1*0.4 + 2*0.3 = 1.0
     expected_mean = np.array([1.6, 1.0])
     actual_mean = Categorical.mean(p_pt).eval()
-    
+
     assert_allclose(actual_mean, expected_mean)

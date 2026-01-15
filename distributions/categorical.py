@@ -13,20 +13,17 @@ def _k(p):
     return pt.shape(p)[-1]
 
 
-def _moments(p):
+def _central_moment(p, order):
     p = _normalize_p(p)
     k = _k(p)
     indices = pt.arange(k)
     mu = pt.sum(indices * p, axis=-1, keepdims=True)
-    centered = indices - mu
-    var = pt.sum(centered**2 * p, axis=-1, keepdims=True)
-    return p, k, indices, mu, var
+    return pt.sum((indices - mu) ** order * p, axis=-1)
 
 
 def mean(p):
     p = _normalize_p(p)
-    k = _k(p)
-    indices = pt.arange(k)
+    indices = pt.arange(_k(p))
     return pt.sum(indices * p, axis=-1)
 
 
@@ -40,8 +37,7 @@ def median(p):
 
 
 def var(p):
-    _, _, _, _, v = _moments(p)
-    return pt.squeeze(v)
+    return _central_moment(p, 2)
 
 
 def std(p):
@@ -49,17 +45,11 @@ def std(p):
 
 
 def skewness(p):
-    p_norm, k, indices, mu, v = _moments(p)
-    centered = indices - mu
-    third = pt.sum(centered**3 * p_norm, axis=-1)
-    return third / (pt.squeeze(v) ** 1.5)
+    return _central_moment(p, 3) / var(p) ** 1.5
 
 
 def kurtosis(p):
-    p_norm, k, indices, mu, v = _moments(p)
-    centered = indices - mu
-    fourth = pt.sum(centered**4 * p_norm, axis=-1)
-    return fourth / (pt.squeeze(v) ** 2) - 3
+    return _central_moment(p, 4) / var(p) ** 2 - 3
 
 
 def entropy(p):
@@ -80,12 +70,7 @@ def logpdf(x, p):
     is_integer = pt.eq(x, pt.floor(x))
     valid = pt.and_(in_support, is_integer)
     safe_x = pt.clip(x_int, 0, k - 1)
-    
-    # Use mask for robust indexing across dimensions
-    indices = pt.arange(k)
-    mask = pt.eq(pt.shape_padright(safe_x), indices)
-    log_p = pt.log(pt.sum(p * mask, axis=-1))
-    
+    log_p = pt.take_along_axis(pt.log(p), safe_x[..., None], axis=-1)[..., 0]
     return pt.switch(valid, log_p, -pt.inf)
 
 
@@ -96,12 +81,7 @@ def cdf(x, p):
     x_floor = pt.floor(x)
     cumsum_p = pt.cumsum(p, axis=-1)
     safe_x = pt.cast(pt.clip(x_floor, 0, k - 1), "int64")
-    
-    # Use mask for robust indexing across dimensions
-    indices = pt.arange(k)
-    mask = pt.eq(pt.shape_padright(safe_x), indices)
-    cdf_val = pt.sum(cumsum_p * mask, axis=-1)
-    
+    cdf_val = pt.take_along_axis(cumsum_p, safe_x[..., None], axis=-1)[..., 0]
     return cdf_bounds(cdf_val, x, 0, k - 1)
 
 
