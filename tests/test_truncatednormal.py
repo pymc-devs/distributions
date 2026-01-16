@@ -50,19 +50,13 @@ def test_truncatednormal_extreme_tail():
     lower = pt.as_tensor_variable(10.0)
     upper = pt.as_tensor_variable(12.0)
 
-    # Check PDF at 11.0
     pdf_res = TruncatedNormal.pdf(11.0, mu, sigma, lower, upper).eval()
-
     assert np.isfinite(pdf_res)
     assert pdf_res > 0
 
-    # Check Entropy
     entropy_res = TruncatedNormal.entropy(mu, sigma, lower, upper).eval()
-
     assert np.isfinite(entropy_res)
 
-    # Check PPF
     ppf_res = TruncatedNormal.ppf(0.5, mu, sigma, lower, upper).eval()
-
     assert np.isfinite(ppf_res)
     assert 10.0 <= ppf_res <= 12.0
