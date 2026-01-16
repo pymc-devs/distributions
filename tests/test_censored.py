@@ -383,3 +383,228 @@ class TestCensoredEdgeCases:
 
         # For symmetric censoring around 0, mean should be close to 0
         assert np.abs(samples.mean()) < 0.05, f"Sample mean {samples.mean()} too far from 0"
+
+
+class TestCensoredMoments:
+    """Tests for censored distribution moment functions."""
+
+    @pytest.mark.parametrize(
+        "lower, upper",
+        [
+            (-1.0, 1.0),  # Two-sided censoring
+            (None, 1.0),  # Right-censored only
+            (-1.0, None),  # Left-censored only
+        ],
+    )
+    def test_mean_vs_empirical(self, lower, upper):
+        """Test that computed mean matches empirical mean from samples."""
+        mu, sigma = 0.0, 1.0
+        rng = pt.random.default_rng(42)
+
+        # Compute theoretical mean
+        theoretical_mean = censored.mean(normal, lower, upper, mu, sigma).eval()
+
+        # Compute empirical mean from samples
+        samples = censored.rvs(
+            normal, lower, upper, mu, sigma, size=(100000,), random_state=rng
+        ).eval()
+        empirical_mean = samples.mean()
+
+        # Use atol for values close to 0, rtol otherwise
+        assert_allclose(theoretical_mean, empirical_mean, rtol=0.1, atol=0.01)
+
+    @pytest.mark.parametrize(
+        "lower, upper",
+        [
+            (-1.0, 1.0),
+            (None, 1.0),
+            (-1.0, None),
+        ],
+    )
+    def test_var_vs_empirical(self, lower, upper):
+        """Test that computed variance matches empirical variance from samples."""
+        mu, sigma = 0.0, 1.0
+        rng = pt.random.default_rng(42)
+
+        # Compute theoretical variance
+        theoretical_var = censored.var(normal, lower, upper, mu, sigma).eval()
+
+        # Compute empirical variance from samples
+        samples = censored.rvs(
+            normal, lower, upper, mu, sigma, size=(100000,), random_state=rng
+        ).eval()
+        empirical_var = samples.var()
+
+        assert_allclose(theoretical_var, empirical_var, rtol=0.05)
+
+    @pytest.mark.parametrize(
+        "lower, upper",
+        [
+            (-1.0, 1.0),
+            (None, 1.0),
+            (-1.0, None),
+        ],
+    )
+    def test_std_is_sqrt_var(self, lower, upper):
+        """Test that std = sqrt(var)."""
+        mu, sigma = 0.0, 1.0
+
+        std_val = censored.std(normal, lower, upper, mu, sigma).eval()
+        var_val = censored.var(normal, lower, upper, mu, sigma).eval()
+
+        assert_allclose(std_val, np.sqrt(var_val), rtol=1e-6)
+
+    def test_mean_symmetric_censoring(self):
+        """Test that symmetric censoring around 0 gives mean close to 0."""
+        mu, sigma = 0.0, 1.0
+        lower, upper = -1.0, 1.0
+
+        mean_val = censored.mean(normal, lower, upper, mu, sigma).eval()
+        assert_allclose(mean_val, 0.0, atol=0.01)
+
+    @pytest.mark.parametrize(
+        "lower, upper",
+        [
+            (-1.0, 1.0),
+            (None, 1.0),
+            (-1.0, None),
+        ],
+    )
+    def test_median_is_ppf_half(self, lower, upper):
+        """Test that median equals ppf(0.5)."""
+        mu, sigma = 0.0, 1.0
+
+        median_val = censored.median(normal, lower, upper, mu, sigma).eval()
+        ppf_half = censored.ppf(0.5, normal, lower, upper, mu, sigma).eval()
+
+        assert_allclose(median_val, ppf_half, rtol=1e-6)
+
+    def test_mode_in_interior(self):
+        """Test mode when base distribution's mode is in interior and has highest density."""
+        # Wide censoring bounds, mode should be at base mode (0)
+        mu, sigma = 0.0, 1.0
+        lower, upper = -3.0, 3.0
+
+        mode_val = censored.mode(normal, lower, upper, mu, sigma).eval()
+        # Mode should be close to 0 (base distribution's mode)
+        assert_allclose(mode_val, 0.0, atol=0.01)
+
+    def test_mode_at_lower_bound(self):
+        """Test mode when point mass at lower bound is largest."""
+        # Shift normal to the right so CDF(lower) is high
+        mu, sigma = 3.0, 1.0
+        lower, upper = 0.0, 6.0
+
+        # CDF(0) for N(3,1) is about 0.0013, which is small
+        # Let's use a different case: truncate strongly on the left
+        mu, sigma = 0.0, 1.0
+        lower, upper = 0.5, 3.0
+
+        # CDF(0.5) for N(0,1) is about 0.69
+        # pdf(mode=0.5) = pdf(0.5) for N(0,1) is about 0.35
+        # SF(3) for N(0,1) is about 0.0013
+
+        # Actually, let me think about this more carefully...
+        # For mode to be at lower, we need
+        # CDF(lower) >= pdf(clipped_mode) and CDF(lower) >= SF(upper)
+        # If mu=0, sigma=1, lower=0.5, upper=3:
+        # - CDF(0.5) ≈ 0.69
+        # - base mode = 0, clipped to 0.5
+        # - pdf(0.5) ≈ 0.35
+        # - SF(3) ≈ 0.0013
+        # So CDF(0.5) > pdf(0.5) and CDF(0.5) > SF(3), so mode should be at lower
+
+        mode_val = censored.mode(normal, lower, upper, mu, sigma).eval()
+        assert_allclose(mode_val, lower, rtol=1e-6)
+
+    def test_mode_at_upper_bound(self):
+        """Test mode when point mass at upper bound is largest."""
+        mu, sigma = 0.0, 1.0
+        lower, upper = -3.0, -0.5
+
+        # SF(-0.5) for N(0,1) is about 0.69
+        # base mode = 0, clipped to -0.5
+        # pdf(-0.5) ≈ 0.35
+        # CDF(-3) ≈ 0.0013
+        # So SF(-0.5) > pdf(-0.5) and SF(-0.5) > CDF(-3), so mode should be at upper
+
+        mode_val = censored.mode(normal, lower, upper, mu, sigma).eval()
+        assert_allclose(mode_val, upper, rtol=1e-6)
+
+    def test_skewness_symmetric(self):
+        """Test that symmetric censoring around mean gives near-zero skewness."""
+        mu, sigma = 0.0, 1.0
+        lower, upper = -1.0, 1.0
+
+        skewness_val = censored.skewness(normal, lower, upper, mu, sigma).eval()
+        assert_allclose(skewness_val, 0.0, atol=0.05)
+
+    @pytest.mark.parametrize(
+        "lower, upper",
+        [
+            (-1.0, 1.0),
+            (None, 1.0),
+            (-1.0, None),
+        ],
+    )
+    def test_kurtosis_finite(self, lower, upper):
+        """Test that kurtosis is finite."""
+        mu, sigma = 0.0, 1.0
+
+        kurtosis_val = censored.kurtosis(normal, lower, upper, mu, sigma).eval()
+        assert np.isfinite(kurtosis_val)
+
+    @pytest.mark.parametrize(
+        "lower, upper",
+        [
+            (-1.0, 1.0),
+            (None, 1.0),
+            (-1.0, None),
+        ],
+    )
+    def test_entropy_positive(self, lower, upper):
+        """Test that entropy is positive for continuous base distribution."""
+        mu, sigma = 0.0, 1.0
+
+        entropy_val = censored.entropy(normal, lower, upper, mu, sigma).eval()
+        assert entropy_val > 0
+
+    def test_entropy_less_than_uncensored(self):
+        """Test that censoring reduces entropy (less uncertainty)."""
+        mu, sigma = 0.0, 1.0
+        lower, upper = -1.0, 1.0
+
+        censored_entropy = censored.entropy(normal, lower, upper, mu, sigma).eval()
+        # Uncensored normal entropy = 0.5 * log(2 * pi * e * sigma^2) ≈ 1.42 for sigma=1
+        uncensored_entropy = normal.entropy(mu, sigma).eval()
+
+        # Censoring should reduce entropy
+        assert censored_entropy < uncensored_entropy
+
+    def test_no_censoring_mean_matches_base(self):
+        """Test that mean without censoring matches base distribution mean."""
+        mu, sigma = 2.0, 1.5
+
+        censored_mean = censored.mean(normal, None, None, mu, sigma).eval()
+        base_mean = normal.mean(mu, sigma).eval()
+
+        assert_allclose(censored_mean, base_mean, rtol=0.01)
+
+    def test_no_censoring_var_matches_base(self):
+        """Test that variance without censoring matches base distribution variance."""
+        mu, sigma = 2.0, 1.5
+
+        censored_var = censored.var(normal, None, None, mu, sigma).eval()
+        base_var = normal.var(mu, sigma).eval()
+
+        assert_allclose(censored_var, base_var, rtol=0.01)
+
+    def test_censoring_reduces_variance(self):
+        """Test that censoring reduces variance compared to uncensored distribution."""
+        mu, sigma = 0.0, 1.0
+        lower, upper = -1.0, 1.0
+
+        censored_var = censored.var(normal, lower, upper, mu, sigma).eval()
+        uncensored_var = normal.var(mu, sigma).eval()
+
+        assert censored_var < uncensored_var
