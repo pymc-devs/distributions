@@ -103,10 +103,10 @@ def continuous_entropy(min_x, max_x, logpdf_func, *params):
 
     Parameters
     ----------
-    min_x : float
-        Minimum value for integration
-    max_x : float
-        Maximum value for integration
+    min_x : float or tensor
+        Minimum value for integration (can be batched)
+    max_x : float or tensor
+        Maximum value for integration (can be batched)
     logpdf_func : function
         Log probability density function that takes (x, *params) as arguments
     *params : tensor variables
@@ -116,20 +116,28 @@ def continuous_entropy(min_x, max_x, logpdf_func, *params):
     -------
     entropy : tensor
     """
+    n_points = 1000
+
     if len(params) == 1:
         broadcast_shape = pt.as_tensor_variable(params[0])
     else:
         broadcast_shape = pt.broadcast_arrays(*params)[0]
 
-    x_values = pt.linspace(min_x, max_x, 1000)
-    x_broadcast = x_values.reshape((-1,) + (1,) * broadcast_shape.ndim)
+    x_values = pt.linspace(min_x, max_x, n_points)
+
+    # When bounds are batched, linspace returns (n_points, batch_dims...) which
+    # already broadcasts correctly with params. Only reshape for scalar bounds.
+    if x_values.ndim == 1 and broadcast_shape.ndim > 0:
+        x_broadcast = x_values.reshape((-1,) + (1,) * broadcast_shape.ndim)
+    else:
+        x_broadcast = x_values
 
     logpdf_vals = logpdf_func(x_broadcast, *params)
     pdf_vals = pt.exp(logpdf_vals)
 
     integrand = -pdf_vals * logpdf_vals
 
-    dx = (max_x - min_x) / (1000 - 1)
+    dx = (max_x - min_x) / (n_points - 1)
     result = dx * (0.5 * integrand[0] + pt.sum(integrand[1:-1], axis=0) + 0.5 * integrand[-1])
 
     return pt.squeeze(result) if broadcast_shape.ndim == 0 else result
@@ -240,10 +248,10 @@ def continuous_moment(lower, upper, logpdf, *params, order=1, mean_val=None, n_p
 
     Parameters
     ----------
-    lower : float
-        Lower bound for integration
-    upper : float
-        Upper bound for integration
+    lower : float or tensor
+        Lower bound for integration (can be batched)
+    upper : float or tensor
+        Upper bound for integration (can be batched)
     logpdf : function
         Log probability density function that takes (x, *params) as arguments
     *params : tensor variables
@@ -266,7 +274,13 @@ def continuous_moment(lower, upper, logpdf, *params, order=1, mean_val=None, n_p
         broadcast_shape = pt.broadcast_arrays(*params)[0]
 
     x_vals = pt.linspace(lower, upper, n_points)
-    x_broadcast = x_vals.reshape((-1,) + (1,) * broadcast_shape.ndim)
+
+    # When bounds are batched, linspace returns (n_points, batch_dims...) which
+    # already broadcasts correctly with params. Only reshape for scalar bounds.
+    if x_vals.ndim == 1 and broadcast_shape.ndim > 0:
+        x_broadcast = x_vals.reshape((-1,) + (1,) * broadcast_shape.ndim)
+    else:
+        x_broadcast = x_vals
     pdf_vals = pt.exp(logpdf(x_broadcast, *params))
 
     if mean_val is not None:
@@ -402,6 +416,56 @@ def von_mises_cdf(x, mu, kappa):
     return result
 
 
+def continuous_mode(lower, upper, logpdf, *params, n_points=200):
+    """
+    Find the mode of a continuous distribution by grid search over logpdf.
+
+    Parameters
+    ----------
+    lower : float or tensor
+        Lower bound of the search region (can be batched)
+    upper : float or tensor
+        Upper bound of the search region (can be batched)
+    logpdf : function
+        Log probability density function that takes (x, *params) as arguments
+    *params : tensor variables
+        Distribution parameters to pass to logpdf
+    n_points : int
+        Number of grid points for the search
+
+    Returns
+    -------
+    mode : tensor
+        The x value that maximizes the PDF
+    """
+    if len(params) == 1:
+        broadcast_shape = pt.as_tensor_variable(params[0])
+    else:
+        broadcast_shape = pt.broadcast_arrays(*params)[0]
+
+    x_vals = pt.linspace(lower, upper, n_points)
+
+    # When bounds are batched, linspace returns (n_points, batch_dims...) which
+    # already broadcasts correctly with params. Only reshape for scalar bounds.
+    if x_vals.ndim == 1 and broadcast_shape.ndim > 0:
+        x_broadcast = x_vals.reshape((-1,) + (1,) * broadcast_shape.ndim)
+    else:
+        x_broadcast = x_vals
+    logpdf_vals = logpdf(x_broadcast, *params)
+
+    max_idx = pt.argmax(logpdf_vals, axis=0)
+
+    # For batched bounds, each column has different x values, so we need
+    # advanced indexing to select the right x for each batch element
+    if x_vals.ndim > 1:
+        batch_indices = pt.arange(x_vals.shape[1])
+        result = x_vals[max_idx, batch_indices]
+    else:
+        result = x_vals[max_idx]
+
+    return pt.squeeze(result) if broadcast_shape.ndim == 0 else result
+
+
 def zi_mode(base_mode, logpdf, *params):
     """
     Compute mode for zero-inflated distributions.
@@ -424,3 +488,96 @@ def zi_mode(base_mode, logpdf, *params):
         The mode value (either 0 or base_mode)
     """
     return pt.switch(logpdf(0, *params) >= logpdf(base_mode, *params), 0, base_mode)
+
+
+def ncx2_cdf(x, df, nc):
+    """
+    Compute the CDF of the noncentral chi-squared distribution.
+
+    Uses a hybrid approach:
+    - For small nc: Poisson-weighted series starting from j=0
+    - For large nc: Normal approximation (ncx2 approaches normal for large nc)
+
+    The series uses enough terms to cover the significant part of the Poisson
+    distribution, extending well beyond the mode at half_nc.
+
+    Parameters
+    ----------
+    x : tensor
+        Value at which to evaluate the CDF
+    df : float
+        Degrees of freedom
+    nc : tensor
+        Non-centrality parameter
+
+    Returns
+    -------
+    tensor
+        CDF value
+    """
+    x = pt.as_tensor_variable(x)
+    nc = pt.as_tensor_variable(nc)
+    half_nc = nc / 2.0
+    half_df = df / 2.0
+    half_x = x / 2.0
+
+    # Use enough terms to cover mode + several standard deviations
+    # Poisson std = sqrt(lambda), so we need ~mode + 10*sqrt(mode) terms
+    # For nc up to 1000, half_nc up to 500, we need ~500 + 10*22 = 720 terms
+    max_terms = 800
+
+    j = pt.arange(max_terms, dtype="float64")
+
+    # Broadcast j over both x and nc dimensions
+    bc_shape = pt.broadcast_arrays(x, nc)[0]
+    j_bc = j.reshape((-1,) + (1,) * bc_shape.ndim)
+
+    df_bc = half_df + j_bc
+
+    # Compute log-weights: log(Poisson(j; half_nc))
+    # log_w = -half_nc + j*log(half_nc) - log(j!)
+    # Handle half_nc=0 case: all weight on j=0
+    log_half_nc = pt.switch(pt.gt(half_nc, 0), pt.log(half_nc), -pt.inf)
+    log_weights = -half_nc + j_bc * log_half_nc - pt.gammaln(j_bc + 1)
+
+    # Exp with underflow protection
+    weights_bc = pt.exp(pt.clip(log_weights, -700, 700))
+
+    chi2_cdfs = pt.gammainc(df_bc, half_x)
+    series_result = pt.sum(weights_bc * chi2_cdfs, axis=0)
+
+    # Normal approximation for large nc
+    # ncx2(df, nc) ~ N(df + nc, 2*(df + 2*nc)) for large nc
+    mean_approx = df + nc
+    std_approx = pt.sqrt(2 * (df + 2 * nc))
+    normal_result = 0.5 * (1 + pt.erf((x - mean_approx) / (std_approx * pt.sqrt(2))))
+
+    # Use series for nc < 1000, normal approximation otherwise
+    return pt.switch(pt.lt(nc, 1000), series_result, normal_result)
+
+
+def marcum_q1_complement(a, b):
+    """
+    Compute 1 - Q_1(a, b) where Q_1 is the Marcum Q-function.
+
+    Uses the relationship with the noncentral chi-squared distribution:
+    1 - Q_1(a, b) = CDF of ncx2(df=2, nc=a^2) evaluated at b^2
+
+    Parameters
+    ----------
+    a : tensor
+        First parameter
+    b : tensor
+        Second parameter
+
+    Returns
+    -------
+    tensor
+        1 - Q_1(a, b)
+    """
+    nc = a**2
+    x = b**2
+
+    result = ncx2_cdf(x, 2.0, nc)
+
+    return pt.switch(pt.le(b, 0), 0.0, result)
