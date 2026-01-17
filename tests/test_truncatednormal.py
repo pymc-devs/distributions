@@ -1,6 +1,6 @@
-import pytest
-import pytensor.tensor as pt
 import numpy as np
+import pytensor.tensor as pt
+import pytest
 from scipy import stats
 
 from distributions import truncatednormal as TruncatedNormal
