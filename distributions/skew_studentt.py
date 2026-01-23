@@ -22,7 +22,7 @@ def _raw_moment(n, a, b):
     Compute the n-th raw moment of the standardized Jones-Faddy skew-t distribution.
 
     Uses the formula from scipy:
-    E[T^n] = (a + b)^(n/2) / (2^n * B(a, b)) * sum_{k=0}^{n} C(n,k) * (-1)^k * B(a + n/2 - k, b - n/2 + k)
+    E[T^n] = (a+b)^(n/2) / (2^n * B(a,b)) * sum_{k=0}^{n} C(n,k)*(-1)^k*B(a+n/2-k, b-n/2+k)
 
     The moment exists when a > n/2 and b > n/2.
     """
