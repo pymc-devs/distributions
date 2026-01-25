@@ -14,11 +14,13 @@ def run_empirical_tests(
     name=None,
     sample_size=500_000,
     mean_rtol=1e-4,
+    mean_atol=1e-4,
     var_rtol=1e-4,
     std_rtol=1e-4,
     skewness_rtol=1e-1,
     kurtosis_rtol=1e-1,
     quantiles_rtol=1e-4,
+    quantiles_atol=1e-4,
     cdf_rtol=1e-4,
     pdf_cdf_rtol=1e-3,
     is_discrete=False,
@@ -42,7 +44,7 @@ def run_empirical_tests(
         theoretical_mean,
         rvs.mean(),
         rtol=mean_rtol,
-        atol=1e-4,
+        atol=mean_atol,
         err_msg=f"Mean test failed with {param_info}",
     )
     assert_allclose(
@@ -95,7 +97,7 @@ def run_empirical_tests(
         theoretical_quantiles,
         empirical_quantiles,
         rtol=quantiles_rtol,
-        atol=1e-4,
+        atol=quantiles_atol,
         err_msg=f"Quantiles test failed with {param_info}",
     )
     extended_expected_ppf = []

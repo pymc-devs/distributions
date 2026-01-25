@@ -61,6 +61,7 @@ def run_distribution_tests(
             np.quantile(p_rvs, [0.25, 0.5, 0.75]),
             np.quantile(s_rvs, [0.25, 0.5, 0.75]),
             rtol=1e-1,
+            atol=0.05,  # Allow small absolute tolerance for values near zero
             err_msg=f"Random variates (quantiles) test failed with {param_info}",
         )
     else:
