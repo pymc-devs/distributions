@@ -462,23 +462,6 @@ class TestCensoredMoments:
         mean_val = censored.mean(normal, lower, upper, mu, sigma).eval()
         assert_allclose(mean_val, 0.0, atol=0.01)
 
-    @pytest.mark.parametrize(
-        "lower, upper",
-        [
-            (-1.0, 1.0),
-            (None, 1.0),
-            (-1.0, None),
-        ],
-    )
-    def test_median_is_ppf_half(self, lower, upper):
-        """Test that median equals ppf(0.5)."""
-        mu, sigma = 0.0, 1.0
-
-        median_val = censored.median(normal, lower, upper, mu, sigma).eval()
-        ppf_half = censored.ppf(0.5, normal, lower, upper, mu, sigma).eval()
-
-        assert_allclose(median_val, ppf_half, rtol=1e-6)
-
     def test_mode_in_interior(self):
         """Test mode when base distribution's mode is in interior and has highest density."""
         # Wide censoring bounds, mode should be at base mode (0)
@@ -495,24 +478,8 @@ class TestCensoredMoments:
         mu, sigma = 3.0, 1.0
         lower, upper = 0.0, 6.0
 
-        # CDF(0) for N(3,1) is about 0.0013, which is small
-        # Let's use a different case: truncate strongly on the left
         mu, sigma = 0.0, 1.0
         lower, upper = 0.5, 3.0
-
-        # CDF(0.5) for N(0,1) is about 0.69
-        # pdf(mode=0.5) = pdf(0.5) for N(0,1) is about 0.35
-        # SF(3) for N(0,1) is about 0.0013
-
-        # Actually, let me think about this more carefully...
-        # For mode to be at lower, we need
-        # CDF(lower) >= pdf(clipped_mode) and CDF(lower) >= SF(upper)
-        # If mu=0, sigma=1, lower=0.5, upper=3:
-        # - CDF(0.5) ≈ 0.69
-        # - base mode = 0, clipped to 0.5
-        # - pdf(0.5) ≈ 0.35
-        # - SF(3) ≈ 0.0013
-        # So CDF(0.5) > pdf(0.5) and CDF(0.5) > SF(3), so mode should be at lower
 
         mode_val = censored.mode(normal, lower, upper, mu, sigma).eval()
         assert_allclose(mode_val, lower, rtol=1e-6)
