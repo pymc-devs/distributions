@@ -39,15 +39,15 @@ def quaddist_chol(value, mu, cov):
 
 
 def mean(mu, cov):
-    return mu
+    return pt.broadcast_to(mu, cov.shape[:-1])
 
 
 def mode(mu, cov):
-    return mu
+    return pt.broadcast_to(mu, cov.shape[:-1])
 
 
 def median(mu, cov):
-    return mu
+    return pt.broadcast_to(mu, cov.shape[:-1])
 
 
 def var(mu, cov):
@@ -59,10 +59,12 @@ def std(mu, cov):
 
 
 def skewness(mu, cov):
+    mu = pt.broadcast_to(mu, cov.shape[:-1])
     return pt.zeros_like(mu)
 
 
 def kurtosis(mu, cov):
+    mu = pt.broadcast_to(mu, cov.shape[:-1])
     return pt.zeros_like(mu)
 
 
@@ -83,4 +85,5 @@ def logpdf(x, mu, cov):
 
 
 def rvs(mu, cov, size=None, random_state=None):
+    mu = pt.broadcast_to(mu, cov.shape[:-1])
     return pt.random.multivariate_normal(mu, cov, size=size, rng=random_state)
