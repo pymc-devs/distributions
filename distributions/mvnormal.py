@@ -1,6 +1,5 @@
 from functools import partial
 
-import numpy as np
 import pytensor.tensor as pt
 from pytensor.tensor.linalg import solve_triangular
 
@@ -81,7 +80,7 @@ def pdf(x, mu, cov):
 def logpdf(x, mu, cov):
     quaddist, logdet, _ = quaddist_chol(x, mu, cov)
     k = pt.as_tensor(x.shape[-1], dtype="floatX")
-    return -0.5 * (k * pt.log(2 * np.pi) + logdet + quaddist)
+    return -0.5 * (k * pt.log(2 * pt.pi) + logdet + quaddist)
 
 
 def rvs(mu, cov, size=None, random_state=None):
