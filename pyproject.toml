@@ -3,7 +3,7 @@ requires = ["flit_core >=3.4,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
-name = "distributions"
+name = "pytensor-distributions"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{ name = "pymc-devs", email = "pymc.devs@gmail.com" }]
