@@ -164,10 +164,8 @@ def von_mises_ppf(q, mu, kappa, cdf_func, pdf_func):
         delta = (cdf_func(x, mu, kappa) - q) / pt.maximum(pdf_func(x, mu, kappa), 1e-10)
         x = x - delta
 
-    result = pt.switch(
+    return pt.switch(
         (q < 0) | (q > 1),
         pt.nan,
         pt.switch(pt.eq(q, 0), -pt.inf, pt.switch(pt.eq(q, 1), pt.inf, x)),
     )
-
-    return pt.arctan2(pt.sin(result), pt.cos(result))

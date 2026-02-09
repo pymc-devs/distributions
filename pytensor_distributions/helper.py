@@ -340,7 +340,7 @@ def von_mises_cdf(x, mu, kappa):
     ix = pt.round(x_centered / (2 * pt.pi))
     x_wrapped = x_centered - ix * 2 * pt.pi
 
-    CK = 10.0
+    CK = 50.0
     p = pt.cast(pt.clip(pt.round(1 + 28.0 + 0.5 * kappa - 100.0 / (kappa + 5.0)), 5, 50), "int32")
 
     use_series = kappa < CK
