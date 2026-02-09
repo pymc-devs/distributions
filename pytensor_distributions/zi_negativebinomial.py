@@ -10,8 +10,7 @@ def mean(psi, n, p):
 
 
 def mode(psi, n, p):
-    base_mode = NegativeBinomial.mode(n, p)
-    return zi_mode(base_mode, logpdf, psi, n, p)
+    return zi_mode(NegativeBinomial.mode(n, p), logpdf, psi, n, p)
 
 
 def median(psi, n, p):
@@ -19,9 +18,7 @@ def median(psi, n, p):
 
 
 def var(psi, n, p):
-    base_mean = n * (1 - p) / p
-    base_var = n * (1 - p) / pt.power(p, 2)
-    return psi * (base_var + (1 - psi) * pt.power(base_mean, 2))
+    return psi * (NegativeBinomial.var(n, p) + (1 - psi) * pt.power(NegativeBinomial.mean(n, p), 2))
 
 
 def std(psi, n, p):
