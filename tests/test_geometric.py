@@ -4,7 +4,7 @@ import pytensor.tensor as pt
 import pytest
 from scipy import stats
 
-from distributions import geometric as Geometric
+from pytensor_distributions import geometric as Geometric
 from tests.helper_scipy import run_distribution_tests
 
 

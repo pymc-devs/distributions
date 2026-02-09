@@ -3,7 +3,7 @@
 import pytest
 from scipy import stats
 
-from distributions import betascaled as BetaScaled
+from pytensor_distributions import betascaled as BetaScaled
 from tests.helper_scipy import make_params, run_distribution_tests
 
 

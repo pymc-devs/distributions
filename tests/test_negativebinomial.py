@@ -3,7 +3,7 @@
 import pytest
 from scipy import stats
 
-from distributions import negativebinomial as NegativeBinomial
+from pytensor_distributions import negativebinomial as NegativeBinomial
 from tests.helper_scipy import make_params, run_distribution_tests
 
 

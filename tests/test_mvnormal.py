@@ -6,7 +6,7 @@ import pytest
 from numpy.testing import assert_allclose
 from scipy.stats import multivariate_normal
 
-from distributions import mvnormal as MvNormal
+from pytensor_distributions import mvnormal as MvNormal
 
 # Test parameters for multivariate normal
 TEST_CASES = [

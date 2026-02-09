@@ -6,7 +6,7 @@ import pytest
 from numpy.testing import assert_allclose
 from scipy.stats import kurtosis, skew
 
-from distributions import zi_binomial as ZIBinomial
+from pytensor_distributions import zi_binomial as ZIBinomial
 
 
 def make_params(psi, n, p):
@@ -152,7 +152,7 @@ def test_zi_binomial_mean_variance(params):
 
 def test_zi_binomial_reduces_to_binomial():
     """Test that when psi=1, ZI-Binomial reduces to standard Binomial."""
-    from distributions import binomial as Binomial
+    from pytensor_distributions import binomial as Binomial
 
     psi = 1.0
     n = 10

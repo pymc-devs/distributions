@@ -3,7 +3,7 @@
 import pytest
 from scipy import stats
 
-from distributions import exgaussian as ExGaussian
+from pytensor_distributions import exgaussian as ExGaussian
 from tests.helper_scipy import make_params, run_distribution_tests
 
 

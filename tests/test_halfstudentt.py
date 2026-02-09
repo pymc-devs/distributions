@@ -3,7 +3,7 @@
 import pytest
 from scipy import stats
 
-from distributions import halfstudentt as HalfStudentT
+from pytensor_distributions import halfstudentt as HalfStudentT
 from tests.helper_scipy import make_params, run_distribution_tests
 
 # HalfStudentT is not defined in scipy

@@ -6,7 +6,7 @@ import pytest
 from numpy.testing import assert_allclose
 from scipy.stats import wishart as scipy_wishart
 
-from distributions import wishart as Wishart
+from pytensor_distributions import wishart as Wishart
 
 # Test cases: (nu, V)
 TEST_CASES = [

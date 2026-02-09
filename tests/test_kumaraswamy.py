@@ -3,7 +3,7 @@
 import pytest
 from scipy import stats
 
-from distributions import kumaraswamy as Kumaraswamy
+from pytensor_distributions import kumaraswamy as Kumaraswamy
 from tests.helper_empirical import run_empirical_tests
 from tests.helper_scipy import make_params, run_distribution_tests
 

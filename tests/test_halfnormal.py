@@ -3,7 +3,7 @@
 import pytest
 from scipy import stats
 
-from distributions import halfnormal as HalfNormal
+from pytensor_distributions import halfnormal as HalfNormal
 from tests.helper_scipy import make_params, run_distribution_tests
 
 

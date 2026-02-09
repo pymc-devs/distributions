@@ -6,7 +6,7 @@ import pytest
 from numpy.testing import assert_allclose
 from scipy import stats
 
-from distributions import categorical as Categorical
+from pytensor_distributions import categorical as Categorical
 
 
 def make_params(p, dtype="float64"):

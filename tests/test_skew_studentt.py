@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from scipy.stats import jf_skew_t
 
-from distributions import skew_studentt as SkewStudentT
+from pytensor_distributions import skew_studentt as SkewStudentT
 from tests.helper_scipy import make_params, run_distribution_tests
 
 

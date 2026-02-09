@@ -3,7 +3,7 @@
 import pytest
 from scipy import stats
 
-from distributions import triangular as Triangular
+from pytensor_distributions import triangular as Triangular
 from tests.helper_scipy import make_params, run_distribution_tests
 
 

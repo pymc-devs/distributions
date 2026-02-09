@@ -28,13 +28,12 @@ dependencies = ["numpy>=2.0", "pytensor>=2.32.0"]
 test = ["pytest", "pytest-cov"]
 
 [tool.flit.module]
-name = "distributions"
+name = "pytensor_distributions"
 
 [project.urls]
-source = "https://github.com/pymc-devs/distributions"
-tracker = "https://github.com/pymc-devs/distributions/issues"
-documentation = "https://distributions.readthedocs.io"
-funding = "https://opencollective.com/pymc"
+source = "https://github.com/pymc-devs/pytensor-distributions"
+tracker = "https://github.com/pymc-devs/pytensor-distributions/issues"
+documentation = "https://pytensor-distributions.readthedocs.io"
 
 
 [tool.pydocstyle]
@@ -47,7 +46,7 @@ addopts = [
     "--strict-markers",
     "--strict-config",
     "--color=yes",
-    "--cov=distributions",
+    "--cov=pytensor_distributions",
     "--cov=tests",
     "--cov-report=term-missing",
 ]
@@ -78,9 +77,9 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "docs/source/**/*.ipynb" = ["D", "E", "F", "I", "NPY", "PL", "TID", "UP", "W"]
-"distributions/__init__.py" = ["I", "F401", "E402", "F403"]
-"distributions/tests/**/*" = ["D", "PLR2004", "TID252"]
-"distributions/tests/**/*.ipynb" = ["E", "F"]
+"pytensor_distributions/__init__.py" = ["I", "F401", "E402", "F403"]
+"pytensor_distributions/tests/**/*" = ["D", "PLR2004", "TID252"]
+"pytensor_distributions/tests/**/*.ipynb" = ["E", "F"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
