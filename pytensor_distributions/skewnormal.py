@@ -78,7 +78,7 @@ def pdf(x, mu, sigma, alpha):
 def ppf(q, mu, sigma, alpha):
     mu_b, sigma_b, alpha_b = pt.broadcast_arrays(mu, sigma, alpha)
     params = (mu_b, sigma_b, alpha_b)
-    return find_ppf(q, -pt.inf, pt.inf, cdf, *params)
+    return find_ppf(q, mean(mu_b, sigma_b, alpha_b), -pt.inf, pt.inf, cdf, pdf, *params)
 
 
 def sf(x, mu, sigma, alpha):

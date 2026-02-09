@@ -102,7 +102,7 @@ def logsf(x, nu, sigma):
 
 
 def ppf(q, nu, sigma):
-    return find_ppf(q, 0, pt.inf, cdf, nu, sigma)
+    return find_ppf(q, mean(nu, sigma), 0, pt.inf, cdf, pdf, nu, sigma)
 
 
 def isf(q, nu, sigma):

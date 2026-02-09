@@ -19,7 +19,7 @@ from tests.helper_scipy import make_params, run_distribution_tests
 )
 def test_wald_vs_scipy(params, sp_params):
     """Test Wald distribution against scipy.stats.invgauss."""
-    p_params = make_params(*params)
+    p_params = make_params(*params, dtype="float64")
     support = (0, float("inf"))
 
     run_distribution_tests(

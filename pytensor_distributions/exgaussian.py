@@ -63,7 +63,7 @@ def pdf(x, mu, sigma, nu):
 
 
 def ppf(q, mu, sigma, nu):
-    return find_ppf(q, -pt.inf, pt.inf, cdf, mu, sigma, nu)
+    return find_ppf(q, mean(mu, sigma, nu), -pt.inf, pt.inf, cdf, pdf, mu, sigma, nu)
 
 
 def sf(x, mu, sigma, nu):

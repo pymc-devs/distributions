@@ -1,53 +1,33 @@
 import math
 
 import pytensor.tensor as pt
+from pytensor import scan
+from pytensor.scan.utils import until
 
 from pytensor_distributions.helper import ppf_bounds_cont, ppf_bounds_disc
 
 
-def find_ppf(q, lower, upper, cdf, *params):
-    """
-    Compute the inverse CDF using the bisection method.
+def find_ppf(q, x0, lower, upper, cdf_func, pdf_func, *params, max_iter=100, tol=1e-8):
+    x0 = x0 + pt.zeros_like(q)
 
-    Uses iterative expansion for infinite bounds.
+    def step(x_prev):
+        cdf_val = cdf_func(x_prev, *params)
+        f_x = pt.maximum(pdf_func(x_prev, *params), 1e-10)
+        delta = (cdf_val - q) / f_x
 
-    Note: We need to improve this method!!!
-    """
+        max_step = pt.maximum(pt.abs(x_prev), 1.0)
+        delta = pt.clip(delta, -max_step, max_step)
+        x_new = x_prev - delta
 
-    def func(x):
-        return cdf(x, *params) - q
+        converged = pt.abs(x_new - x_prev) < tol
+        x_new = pt.switch(converged, x_prev, x_new)
 
-    factor = 10.0
-    right = pt.switch(pt.isinf(upper), factor, upper)
-    left = pt.switch(pt.isinf(lower), -factor, lower)
+        all_converged = pt.all(converged)
+        return x_new, until(all_converged)
 
-    for _ in range(10):
-        f_left = func(left)
-        should_expand = pt.gt(f_left, 0.0)
-        new_left = left * factor
-        new_right = left
-        left = pt.switch(should_expand, new_left, left)
-        right = pt.switch(should_expand, new_right, right)
+    x_seq = scan(fn=step, outputs_info=pt.shape_padleft(x0), n_steps=max_iter, return_updates=False)
 
-    for _ in range(10):
-        f_right = func(right)
-        should_expand = pt.lt(f_right, 0.0)
-        new_left = right
-        new_right = right * factor
-        left = pt.switch(should_expand, new_left, left)
-        right = pt.switch(should_expand, new_right, right)
-
-    for _ in range(50):
-        mid = 0.5 * (left + right)
-        f_mid = cdf(mid, *params) - q
-
-        new_lower = pt.switch(pt.lt(f_mid, 0), mid, left)
-        new_upper = pt.switch(pt.lt(f_mid, 0), right, mid)
-
-        left = new_lower
-        right = new_upper
-
-    return ppf_bounds_cont(0.5 * (left + right), q, lower, upper)
+    return ppf_bounds_cont(x_seq[-1].squeeze(), q, lower, upper)
 
 
 def _is_scalar_param(param):
@@ -155,17 +135,3 @@ def find_ppf_discrete(q, lower, upper, cdf, *params):
         result = k_vals[first_idx]
 
     return ppf_bounds_disc(result, q, lower, upper)
-
-
-def von_mises_ppf(q, mu, kappa, cdf_func, pdf_func):
-    """Approximated Von Mises ppf."""
-    x = mu
-    for _ in range(5):
-        delta = (cdf_func(x, mu, kappa) - q) / pt.maximum(pdf_func(x, mu, kappa), 1e-10)
-        x = x - delta
-
-    return pt.switch(
-        (q < 0) | (q > 1),
-        pt.nan,
-        pt.switch(pt.eq(q, 0), -pt.inf, pt.switch(pt.eq(q, 1), pt.inf, x)),
-    )
