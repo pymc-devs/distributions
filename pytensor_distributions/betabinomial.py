@@ -97,7 +97,7 @@ def cdf(x, n, alpha, beta):
 
 def ppf(q, n, alpha, beta):
     params = (n, alpha, beta)
-    return find_ppf_discrete(q, 0, n, cdf, *params)
+    return find_ppf_discrete(q, mean(n, alpha, beta), 0, n, cdf, pdf, *params)
 
 
 def sf(x, n, alpha, beta):

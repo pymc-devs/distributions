@@ -52,7 +52,7 @@ def cdf(x, mu):
 
 def ppf(q, mu):
     params = (mu,)
-    return find_ppf_discrete(q, 0, pt.inf, cdf, *params)
+    return find_ppf_discrete(q, mu, 0, pt.inf, cdf, pdf, *params)
 
 
 def sf(x, mu):

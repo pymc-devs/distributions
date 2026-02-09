@@ -97,41 +97,30 @@ def _should_use_bisection(lower, upper, params, max_direct_search_size=10_000):
     return (upper_val - lower_val) > max_direct_search_size
 
 
-def find_ppf_discrete(q, lower, upper, cdf, *params):
-    """
-    Compute the inverse CDF for discrete distributions.
+def find_ppf_discrete(q, x0, lower, upper, cdf_func, pmf_func, *params, max_iter=100):
+    """Find PPF for discrete distributions."""
+    x0 = pt.floor(x0) + pt.zeros_like(q)
 
-    For narrow bounded support, uses direct search over all values (fast).
-    For unbounded or wide support, uses bisection method.
-    """
-    if _should_use_bisection(lower, upper, params):
-        # Use bisection method for unbounded or wide ranges
-        rounded_k = pt.round(find_ppf(q, lower, upper, cdf, *params))
-        cdf_k = cdf(rounded_k, *params)
-        rounded_k = pt.switch(pt.lt(cdf_k, q), rounded_k + 1, rounded_k)
-        return ppf_bounds_disc(rounded_k, q, lower, upper)
+    def step(x_prev):
+        x_int = pt.floor(x_prev)
 
-    # Bounded case with narrow range: direct search over all values
-    q = pt.as_tensor_variable(q)
+        cdf_val = cdf_func(x_int, *params)
+        cdf_val_minus = cdf_func(x_int - 1, *params)
 
-    # Create array of all possible values in support
-    k_vals = pt.arange(lower, upper + 1)
+        found = (cdf_val >= q) & (cdf_val_minus < q)
+        pmf_val = pt.maximum(pmf_func(x_int, *params), 1e-10)
+        delta = (cdf_val - q) / pmf_val
 
-    # Compute CDF for all values - shape: (n_support,)
-    cdf_vals = cdf(k_vals, *params)
+        delta_discrete = pt.switch(pt.abs(delta) < 0.5, pt.sign(cdf_val - q), pt.floor(delta))
 
-    # Use a small tolerance for floating point comparison
-    eps = 1e-10
+        x_new = x_int - delta_discrete
 
-    if q.ndim == 0:
-        # Scalar case
-        exceeds_q = pt.ge(cdf_vals, q - eps)
-        first_idx = pt.argmax(exceeds_q)
-        result = k_vals[first_idx]
-    else:
-        # Array case - need broadcasting
-        exceeds_q = pt.ge(cdf_vals[:, None], q[None, :] - eps)
-        first_idx = pt.argmax(exceeds_q, axis=0)
-        result = k_vals[first_idx]
+        x_new = pt.clip(x_new, lower, upper)
+        x_new = pt.switch(found, x_int, x_new)
+        all_converged = pt.all(found)
 
-    return ppf_bounds_disc(result, q, lower, upper)
+        return x_new, until(all_converged)
+
+    x_seq = scan(fn=step, outputs_info=pt.shape_padleft(x0), n_steps=max_iter, return_updates=False)
+
+    return ppf_bounds_disc(pt.floor(x_seq[-1].squeeze()), q, lower, upper)
