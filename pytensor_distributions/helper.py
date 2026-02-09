@@ -1,5 +1,4 @@
 import pytensor.tensor as pt
-from pytensor.scan import scan
 
 
 def cdf_bounds(prob, x, lower, upper):
@@ -335,84 +334,41 @@ def to_tau(sigma):
     return tau
 
 
-def von_mises_cdf_series(kappa, x, p):
-    """
-    Compute von Mises CDF using series expansion.
-
-    Parameters
-    ----------
-    kappa : tensor
-        Concentration parameter
-    x : tensor
-        Angle centered at mu (after wrapping to [-pi, pi])
-    p : tensor (int)
-        Number of terms in series
-
-    Returns
-    -------
-    tensor
-        CDF value
-    """
-
-    def series_step(n, cumsum, kappa, x):
-        bessel_ratio = pt.ive(n, kappa) / pt.ive(0, kappa)
-        term = bessel_ratio * pt.sin(n * x) / n
-        return cumsum + term
-
-    n_values = pt.arange(1, p + 1, dtype="float64")
-    init_sum = pt.zeros_like(x)
-
-    results, _ = scan(
-        fn=lambda n, cs: series_step(n, cs, kappa, x), sequences=[n_values], outputs_info=[init_sum]
-    )
-    series_sum = results[-1]
-    result = 0.5 + x / (2 * pt.pi) + series_sum / pt.pi
-
-    return result
-
-
-def von_mises_cdf_normalapprox(kappa, x):
-    """
-    Compute von Mises CDF using normal approximation for large kappa.
-
-    Parameters
-    ----------
-    kappa : tensor
-        Concentration parameter (large values)
-    x : tensor
-        Angle centered at mu
-
-    Returns
-    -------
-    tensor
-        CDF value using normal approximation
-    """
-    b = pt.sqrt(2 / pt.pi) / pt.ive(0.0, kappa)
-    z = b * pt.sin(x / 2.0)
-    return 0.5 * (1.0 + pt.erf(z / pt.sqrt(2.0)))
-
-
 def von_mises_cdf(x, mu, kappa):
+    """Approximate VonMises CDF with vectorized series."""
     x_centered = x - mu
     ix = pt.round(x_centered / (2 * pt.pi))
     x_wrapped = x_centered - ix * 2 * pt.pi
 
-    # Constants from scipy implementation
-    CK = 50.0  # Threshold for switching between methods
-    a1, a2, a3, a4 = 28.0, 0.5, 100.0, 5.0
-
-    # Compute number of terms for series expansion
-    p = pt.cast(pt.round(1 + a1 + a2 * kappa - a3 / (kappa + a4)), "int32")
+    CK = 50.0
+    p = pt.cast(pt.clip(pt.round(1 + 28.0 + 0.5 * kappa - 100.0 / (kappa + 5.0)), 5, 50), "int32")
 
     use_series = kappa < CK
+    n_values = pt.arange(1, p + 1, dtype="float64")
 
-    cdf_series = von_mises_cdf_series(kappa, x_wrapped, p)
+    n_expanded = n_values[:, None]
+    kappa_expanded = pt.atleast_1d(kappa)[None, :]
+    x_expanded = pt.atleast_1d(x_wrapped)[None, :]
+
+    bessel_ratio = pt.ive(n_expanded, kappa_expanded) / pt.ive(0, kappa_expanded)
+    terms = bessel_ratio * pt.sin(n_expanded * x_expanded) / n_expanded
+
+    mask = n_values[:, None] <= pt.atleast_1d(p)[None, :]
+    masked_terms = pt.switch(mask, terms, 0.0)
+    series_sum = pt.sum(masked_terms, axis=0)
+
+    series_sum = pt.squeeze(series_sum)
+
+    cdf_series = 0.5 + x_wrapped / (2 * pt.pi) + series_sum / pt.pi
     cdf_series = pt.clip(cdf_series, 0.0, 1.0)
-    cdf_norm = von_mises_cdf_normalapprox(kappa, x_wrapped)
+
+    # Normal approximation
+    b = pt.sqrt(2 / pt.pi) / pt.ive(0.0, kappa)
+    z = b * pt.sin(x_wrapped / 2.0)
+    cdf_norm = 0.5 * (1.0 + pt.erf(z / pt.sqrt(2.0)))
 
     result = pt.switch(use_series, cdf_series, cdf_norm)
     result = result + ix
-
     return result
 
 

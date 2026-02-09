@@ -74,4 +74,4 @@ def isf(q, mu, kappa):
 
 
 def ppf(q, mu, kappa):
-    return von_mises_ppf(q, mu, kappa, von_mises_cdf)
+    return von_mises_ppf(q, mu, kappa, von_mises_cdf, pdf)
