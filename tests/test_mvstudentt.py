@@ -6,7 +6,7 @@ import pytest
 from numpy.testing import assert_allclose
 from scipy.stats import multivariate_t
 
-from distributions import mvstudentt as MvStudentT
+from pytensor_distributions import mvstudentt as MvStudentT
 
 TEST_CASES = [
     (5.0, np.array([0.0, 0.0]), np.eye(2)),

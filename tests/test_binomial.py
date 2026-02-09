@@ -4,7 +4,7 @@ import pytensor.tensor as pt
 import pytest
 from scipy import stats
 
-from distributions import binomial as Binomial
+from pytensor_distributions import binomial as Binomial
 from tests.helper_scipy import run_distribution_tests
 
 

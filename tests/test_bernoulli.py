@@ -3,7 +3,7 @@
 import pytest
 from scipy import stats
 
-from distributions import bernoulli as Bernoulli
+from pytensor_distributions import bernoulli as Bernoulli
 from tests.helper_scipy import make_params, run_distribution_tests
 
 

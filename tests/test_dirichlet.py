@@ -6,7 +6,7 @@ import pytest
 from numpy.testing import assert_allclose
 from scipy.stats import dirichlet, kurtosis, skew
 
-from distributions import dirichlet as Dirichlet
+from pytensor_distributions import dirichlet as Dirichlet
 
 TEST_CASES = [
     np.array([1.0, 1.0]),

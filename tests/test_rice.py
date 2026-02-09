@@ -3,7 +3,7 @@ import pytest
 from numpy.testing import assert_allclose
 from scipy import stats
 
-from distributions import rice as Rice
+from pytensor_distributions import rice as Rice
 from tests.helper_scipy import make_params, run_distribution_tests
 
 

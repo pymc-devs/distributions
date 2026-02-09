@@ -6,7 +6,7 @@ import pytest
 from numpy.testing import assert_allclose
 from scipy.stats import multinomial as scipy_multinomial
 
-from distributions import multinomial as Multinomial
+from pytensor_distributions import multinomial as Multinomial
 
 TEST_CASES = [
     (10, np.array([0.5, 0.5])),

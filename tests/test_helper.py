@@ -4,7 +4,7 @@ import numpy as np
 import pytensor.tensor as pt
 from numpy.testing import assert_allclose
 
-from distributions.helper import zi_mode
+from pytensor_distributions.helper import zi_mode
 
 
 class TestZiMode:
@@ -56,7 +56,7 @@ class TestZiMode:
 
     def test_zi_mode_with_zi_poisson(self):
         """Test zi_mode with actual ZI-Poisson distribution."""
-        from distributions import zi_poisson as ZIPoisson
+        from pytensor_distributions import zi_poisson as ZIPoisson
 
         # High zero inflation (low psi) - mode should be 0
         psi_low = pt.constant(0.3)
@@ -73,7 +73,7 @@ class TestZiMode:
 
     def test_zi_mode_with_zi_binomial(self):
         """Test zi_mode with actual ZI-Binomial distribution."""
-        from distributions import zi_binomial as ZIBinomial
+        from pytensor_distributions import zi_binomial as ZIBinomial
 
         # High zero inflation (low psi) - mode should be 0
         psi_low = pt.constant(0.2)
@@ -90,7 +90,7 @@ class TestZiMode:
 
     def test_zi_mode_with_zi_negativebinomial(self):
         """Test zi_mode with actual ZI-Negative Binomial distribution."""
-        from distributions import zi_negativebinomial as ZINegBinom
+        from pytensor_distributions import zi_negativebinomial as ZINegBinom
 
         # High zero inflation (low psi) - mode should be 0
         psi_low = pt.constant(0.2)
@@ -109,7 +109,7 @@ class TestZiMode:
 
     def test_zi_mode_vectorized(self):
         """Test that zi_mode works with array inputs."""
-        from distributions import zi_poisson as ZIPoisson
+        from pytensor_distributions import zi_poisson as ZIPoisson
 
         # Array of psi values
         psi_array = pt.constant(np.array([0.1, 0.5, 0.99]))
@@ -126,7 +126,7 @@ class TestZiMode:
 
     def test_zi_mode_preserves_shape(self):
         """Test that zi_mode preserves input shape."""
-        from distributions import zi_poisson as ZIPoisson
+        from pytensor_distributions import zi_poisson as ZIPoisson
 
         psi = pt.constant(np.array([[0.9, 0.9], [0.9, 0.9]]))
         mu = pt.constant(np.array([[3.0, 5.0], [7.0, 10.0]]))

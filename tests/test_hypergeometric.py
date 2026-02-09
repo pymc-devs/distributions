@@ -2,7 +2,7 @@ import pytensor.tensor as pt
 import pytest
 from scipy import stats
 
-from distributions import hypergeometric as Hypergeometric
+from pytensor_distributions import hypergeometric as Hypergeometric
 from tests.helper_scipy import run_distribution_tests
 
 

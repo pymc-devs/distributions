@@ -6,7 +6,7 @@ import pytest
 from numpy.testing import assert_allclose
 from scipy.stats import dirichlet_multinomial, kurtosis, skew
 
-from distributions import dirichletmultinomial as DirichletMultinomial
+from pytensor_distributions import dirichletmultinomial as DirichletMultinomial
 
 TEST_CASES = [
     (10, np.array([1.0, 1.0])),
@@ -142,7 +142,7 @@ def test_dirichletmultinomial_constraints():
 
 @pytest.mark.parametrize("n, a", TEST_CASES)
 def test_dirichletmultinomial_skewness(n, a):
-    from distributions import dirichletmultinomial as DM
+    from pytensor_distributions import dirichletmultinomial as DM
 
     p_n = pt.constant(n)
     p_a = pt.constant(a)

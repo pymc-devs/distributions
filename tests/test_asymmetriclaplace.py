@@ -3,7 +3,7 @@
 import pytest
 from scipy import stats
 
-from distributions import asymmetriclaplace as AsymmetricLaplace
+from pytensor_distributions import asymmetriclaplace as AsymmetricLaplace
 from tests.helper_scipy import make_params, run_distribution_tests
 
 

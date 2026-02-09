@@ -3,7 +3,7 @@
 import pytest
 from scipy import stats
 
-from distributions import moyal as Moyal
+from pytensor_distributions import moyal as Moyal
 from tests.helper_scipy import make_params, run_distribution_tests
 
 

@@ -2,7 +2,7 @@
 
 import pytest
 
-from distributions import discreteweibull as DWeibull
+from pytensor_distributions import discreteweibull as DWeibull
 from tests.helper_empirical import run_empirical_tests
 from tests.helper_scipy import make_params
 

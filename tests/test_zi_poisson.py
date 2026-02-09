@@ -5,7 +5,7 @@ import pytensor.tensor as pt
 import pytest
 from numpy.testing import assert_allclose
 
-from distributions import zi_poisson as ZIPoisson
+from pytensor_distributions import zi_poisson as ZIPoisson
 from tests.helper_empirical import run_empirical_tests
 
 
@@ -143,7 +143,7 @@ def test_zi_poisson_mean_variance(params):
 
 def test_zi_poisson_reduces_to_poisson():
     """Test that when psi=1, ZI-Poisson reduces to standard Poisson."""
-    from distributions import poisson as Poisson
+    from pytensor_distributions import poisson as Poisson
 
     psi = 1.0
     mu = 3.0

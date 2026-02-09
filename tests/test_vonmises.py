@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from scipy import stats
 
-from distributions import vonmises as VonMises
+from pytensor_distributions import vonmises as VonMises
 from tests.helper_scipy import make_params, run_distribution_tests
 
 

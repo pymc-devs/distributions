@@ -3,7 +3,7 @@ import pytensor.tensor as pt
 import pytest
 from scipy import stats
 
-from distributions import truncatednormal as TruncatedNormal
+from pytensor_distributions import truncatednormal as TruncatedNormal
 from tests.helper_scipy import make_params, run_distribution_tests
 
 

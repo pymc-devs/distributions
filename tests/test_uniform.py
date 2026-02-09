@@ -3,7 +3,7 @@
 import pytest
 from scipy import stats
 
-from distributions import uniform as Uniform
+from pytensor_distributions import uniform as Uniform
 from tests.helper_scipy import make_params, run_distribution_tests
 
 

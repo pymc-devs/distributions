@@ -6,7 +6,7 @@ import pytest
 from numpy.testing import assert_allclose
 from scipy.stats import kurtosis, skew
 
-from distributions import zi_negativebinomial as ZINegativeBinomial
+from pytensor_distributions import zi_negativebinomial as ZINegativeBinomial
 
 
 def make_params(*values, dtype="float64"):
@@ -149,7 +149,7 @@ def test_zi_negativebinomial_mean_variance(params):
 
 def test_zi_negativebinomial_reduces_to_negativebinomial():
     """Test that when psi=1, ZI-NegBinom reduces to standard NegBinom."""
-    from distributions import negativebinomial as NegativeBinomial
+    from pytensor_distributions import negativebinomial as NegativeBinomial
 
     psi = 1.0
     n = 5.0

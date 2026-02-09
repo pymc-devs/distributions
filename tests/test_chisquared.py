@@ -3,7 +3,7 @@
 import pytest
 from scipy import stats
 
-from distributions import chisquared as ChiSquared
+from pytensor_distributions import chisquared as ChiSquared
 from tests.helper_scipy import make_params, run_distribution_tests
 
 
