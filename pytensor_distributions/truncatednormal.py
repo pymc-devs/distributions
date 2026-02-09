@@ -17,8 +17,11 @@ def _log_phi(z):
 
 
 def _alpha_beta(mu, sigma, lower, upper):
-    alpha = (lower - mu) / sigma
-    beta = (upper - mu) / sigma
+    alpha_raw = (lower - mu) / sigma
+    beta_raw = (upper - mu) / sigma
+
+    alpha = pt.switch(pt.isinf(alpha_raw) & (alpha_raw < 0), -100.0, alpha_raw)
+    beta = pt.switch(pt.isinf(beta_raw) & (beta_raw > 0), 100.0, beta_raw)
     return alpha, beta
 
 
