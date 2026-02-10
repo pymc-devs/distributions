@@ -60,7 +60,13 @@ def entropy(psi, mu):
 
 
 def pdf(x, psi, mu):
-    return pt.exp(logpdf(x, psi, mu))
+    x = pt.as_tensor_variable(x)
+    result = pt.exp(logpdf(x, psi, mu))
+    return pt.switch(
+        pt.isinf(x) & pt.gt(x, 0),
+        pt.nan,
+        result,
+    )
 
 
 def logpdf(x, psi, mu):
@@ -71,10 +77,16 @@ def logpdf(x, psi, mu):
     base_logpdf = Poisson.logpdf(x, mu)
     log_nonzero_prob = pt.log(psi) + base_logpdf
 
-    return pt.switch(
+    result = pt.switch(
         pt.or_(pt.lt(x, 0), pt.isinf(x)),
         -pt.inf,
         pt.switch(pt.eq(x, 0), log_zero_prob, log_nonzero_prob),
+    )
+
+    return pt.switch(
+        pt.isinf(x) & pt.gt(x, 0),
+        pt.nan,
+        result,
     )
 
 
