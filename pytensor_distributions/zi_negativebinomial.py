@@ -80,7 +80,12 @@ def entropy(psi, n, p):
 
 
 def pdf(x, psi, n, p):
-    return pt.exp(logpdf(x, psi, n, p))
+    result = pt.exp(logpdf(x, psi, n, p))
+    return pt.switch(
+        pt.isinf(x) & pt.gt(x, 0),
+        pt.nan,
+        result,
+    )
 
 
 def logpdf(x, psi, n, p):
@@ -91,10 +96,16 @@ def logpdf(x, psi, n, p):
     base_logpdf = NegativeBinomial.logpdf(x, n, p)
     log_nonzero_prob = pt.log(psi) + base_logpdf
 
-    return pt.switch(
+    result = pt.switch(
         pt.or_(pt.lt(x, 0), pt.isinf(x)),
         -pt.inf,
         pt.switch(pt.eq(x, 0), log_zero_prob, log_nonzero_prob),
+    )
+
+    return pt.switch(
+        pt.isinf(x) & pt.gt(x, 0),
+        pt.nan,
+        result,
     )
 
 

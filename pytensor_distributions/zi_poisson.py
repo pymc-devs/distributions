@@ -62,10 +62,9 @@ def entropy(psi, mu):
 def pdf(x, psi, mu):
     x = pt.as_tensor_variable(x)
     result = pt.exp(logpdf(x, psi, mu))
-    # Return nan for x = inf (positive infinity)
     return pt.switch(
         pt.isinf(x) & pt.gt(x, 0),
-        pt.as_tensor_variable(float("nan")),
+        pt.nan,
         result,
     )
 
@@ -84,10 +83,9 @@ def logpdf(x, psi, mu):
         pt.switch(pt.eq(x, 0), log_zero_prob, log_nonzero_prob),
     )
 
-    # Return nan for x = inf (positive infinity)
     return pt.switch(
         pt.isinf(x) & pt.gt(x, 0),
-        pt.as_tensor_variable(float("nan")),
+        pt.nan,
         result,
     )
 
