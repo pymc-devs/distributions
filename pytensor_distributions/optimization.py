@@ -97,7 +97,7 @@ def _should_use_bisection(lower, upper, params, max_direct_search_size=10_000):
     return (upper_val - lower_val) > max_direct_search_size
 
 
-def find_ppf_discrete(q, x0, lower, upper, cdf_func, pmf_func, *params, max_iter=100):
+def find_ppf_discrete(q, x0, lower, upper, cdf_func, pmf_func, *params, max_iter=100, tol=1e-7):
     """Find PPF for discrete distributions."""
     x0 = pt.floor(x0) + pt.zeros_like(q)
 
@@ -107,7 +107,7 @@ def find_ppf_discrete(q, x0, lower, upper, cdf_func, pmf_func, *params, max_iter
         cdf_val = cdf_func(x_int, *params)
         cdf_val_minus = cdf_func(x_int - 1, *params)
 
-        found = (cdf_val >= q) & (cdf_val_minus < q)
+        found = (cdf_val >= q - tol) & (cdf_val_minus < q)
         pmf_val = pt.maximum(pmf_func(x_int, *params), 1e-10)
         delta = (cdf_val - q) / pmf_val
 
@@ -123,4 +123,4 @@ def find_ppf_discrete(q, x0, lower, upper, cdf_func, pmf_func, *params, max_iter
 
     x_seq = scan(fn=step, outputs_info=pt.shape_padleft(x0), n_steps=max_iter, return_updates=False)
 
-    return ppf_bounds_disc(pt.floor(x_seq[-1].squeeze()), q, lower, upper)
+    return ppf_bounds_disc(x_seq[-1].squeeze(), q, lower, upper)
