@@ -42,7 +42,7 @@ def entropy(alpha, beta):
 
 
 def cdf(x, alpha, beta):
-    return pt.exp(logcdf(x, alpha, beta))
+    return 1 / pt.pi * pt.arctan((x - alpha) / beta) + 0.5
 
 
 def isf(x, alpha, beta):
@@ -66,8 +66,7 @@ def rvs(alpha, beta, size=None, random_state=None):
 
 
 def logcdf(x, alpha, beta):
-    alpha_b, beta_b = pt.broadcast_arrays(alpha, beta)
-    return pt.log((1 / pt.pi) * pt.arctan((x - alpha_b) / beta_b) + 0.5)
+    return pt.log(pt.clip(cdf(x, alpha, beta), 0, 1))
 
 
 def logpdf(x, alpha, beta):
@@ -75,4 +74,5 @@ def logpdf(x, alpha, beta):
 
 
 def logsf(x, alpha, beta):
-    return pt.log(0.5 - (1 / pt.pi) * pt.arctan((x - alpha) / beta))
+    sf_val = 0.5 - (1 / pt.pi) * pt.arctan((x - alpha) / beta)
+    return pt.log(pt.clip(sf_val, 0, 1))

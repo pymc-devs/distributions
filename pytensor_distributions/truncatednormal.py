@@ -1,7 +1,7 @@
 import pytensor.tensor as pt
 
 from pytensor_distributions import normal as Normal
-from pytensor_distributions.helper import cdf_bounds, logdiffexp, ppf_bounds_cont
+from pytensor_distributions.helper import logdiffexp, ppf_bounds_cont
 
 
 def _phi(z):
@@ -174,12 +174,23 @@ def cdf(x, mu, sigma, lower, upper):
     alpha, beta = _alpha_beta(mu, sigma, lower, upper)
     xi = (x - mu) / sigma
 
-    log_num = _log_Z(alpha, xi)
-    log_den = _log_Z(alpha, beta)
-
-    result = pt.exp(log_num - log_den)
-
-    return cdf_bounds(result, x, lower, upper)
+    return pt.switch(
+        pt.le(x, lower),
+        0.0,
+        pt.switch(
+            pt.ge(x, upper),
+            1.0,
+            pt.switch(
+                pt.lt(xi, alpha),
+                0.0,
+                pt.switch(
+                    pt.gt(xi, beta),
+                    1.0,
+                    pt.exp(_log_Z(alpha, xi) - _log_Z(alpha, beta)),
+                ),
+            ),
+        ),
+    )
 
 
 def logcdf(x, mu, sigma, lower, upper):

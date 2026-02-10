@@ -168,14 +168,26 @@ def run_empirical_tests(
     assert np.abs(result - 1) < 0.01, f"PDF integral = {result}, should be 1"
 
     ## PDF is 0 outside support
-    outside_vals = np.array([support[0] - 0.1, support[1] + 0.1])
-    outside_pdf = p_dist.pdf(outside_vals, *p_params).eval()
-    assert_allclose(
-        outside_pdf,
-        [0.0, 0.0],
-        atol=1e-10,
-        err_msg=f"PDF outside support should be 0 with {param_info}",
-    )
+    outside_vals_list = []
+    expected_outside_pdf = []
+
+    if np.isfinite(support[0]):
+        outside_vals_list.append(support[0] - 0.1)
+        expected_outside_pdf.append(0.0)
+
+    if np.isfinite(support[1]):
+        outside_vals_list.append(support[1] + 0.1)
+        expected_outside_pdf.append(0.0)
+
+    if outside_vals_list:
+        outside_vals = np.array(outside_vals_list)
+        outside_pdf = p_dist.pdf(outside_vals, *p_params).eval()
+        assert_allclose(
+            outside_pdf,
+            expected_outside_pdf,
+            atol=1e-10,
+            err_msg=f"PDF outside support should be 0 with {param_info}",
+        )
 
     ## PDF-CDF inverse
     if is_discrete:
