@@ -1,3 +1,17 @@
+<a id="v0.1.2"></a>
+# [v0.1.2](https://github.com/pymc-devs/pytensor-distributions/releases/tag/v0.1.2) - 2026-02-10
+
+## What's Changed
+* Improve performance cdf and ppf vonmises by [@aloctavodia](https://github.com/aloctavodia) in [#44](https://github.com/pymc-devs/pytensor-distributions/pull/44)
+* Improve find_ppf by [@aloctavodia](https://github.com/aloctavodia) in [#45](https://github.com/pymc-devs/pytensor-distributions/pull/45)
+* Small fixes by [@aloctavodia](https://github.com/aloctavodia) in [#46](https://github.com/pymc-devs/pytensor-distributions/pull/46)
+
+
+**Full Changelog**: https://github.com/pymc-devs/pytensor-distributions/compare/v0.1.1...v0.1.2
+
+[Changes][v0.1.2]
+
+
 <a id="v0.1.1"></a>
 # [v0.1.1](https://github.com/pymc-devs/pytensor-distributions/releases/tag/v0.1.1) - 2026-02-09
 
@@ -56,6 +70,7 @@
 [Changes][v0.1.0]
 
 
+[v0.1.2]: https://github.com/pymc-devs/pytensor-distributions/compare/v0.1.1...v0.1.2
 [v0.1.1]: https://github.com/pymc-devs/pytensor-distributions/compare/v0.1.0...v0.1.1
 [v0.1.0]: https://github.com/pymc-devs/pytensor-distributions/tree/v0.1.0
 
