@@ -11,19 +11,21 @@ def find_ppf(q, x0, lower, upper, cdf_func, pdf_func, *params, max_iter=100, tol
     x0 = x0 + pt.zeros_like(q)
 
     def step(x_prev):
-        cdf_val = cdf_func(x_prev, *params)
-        f_x = pt.maximum(pdf_func(x_prev, *params), 1e-10)
+        x_prev_squeezed = pt.squeeze(x_prev)
+
+        cdf_val = cdf_func(x_prev_squeezed, *params)
+        f_x = pt.maximum(pdf_func(x_prev_squeezed, *params), 1e-10)
         delta = (cdf_val - q) / f_x
 
-        max_step = pt.maximum(pt.abs(x_prev), 1.0)
+        max_step = pt.maximum(pt.abs(x_prev_squeezed), 1.0)
         delta = pt.clip(delta, -max_step, max_step)
-        x_new = x_prev - delta
+        x_new = x_prev_squeezed - delta
 
-        converged = pt.abs(x_new - x_prev) < tol
-        x_new = pt.switch(converged, x_prev, x_new)
+        converged = pt.abs(x_new - x_prev_squeezed) < tol
+        x_new = pt.switch(converged, x_prev_squeezed, x_new)
 
         all_converged = pt.all(converged)
-        return x_new, until(all_converged)
+        return pt.shape_padleft(x_new), until(all_converged)
 
     x_seq = scan(fn=step, outputs_info=pt.shape_padleft(x0), n_steps=max_iter, return_updates=False)
 
@@ -102,7 +104,8 @@ def find_ppf_discrete(q, x0, lower, upper, cdf_func, pmf_func, *params, max_iter
     x0 = pt.floor(x0) + pt.zeros_like(q)
 
     def step(x_prev):
-        x_int = pt.floor(x_prev)
+        x_prev_squeezed = pt.squeeze(x_prev)
+        x_int = pt.floor(x_prev_squeezed)
 
         cdf_val = cdf_func(x_int, *params)
         cdf_val_minus = cdf_func(x_int - 1, *params)
@@ -119,7 +122,7 @@ def find_ppf_discrete(q, x0, lower, upper, cdf_func, pmf_func, *params, max_iter
         x_new = pt.switch(found, x_int, x_new)
         all_converged = pt.all(found)
 
-        return x_new, until(all_converged)
+        return pt.shape_padleft(x_new), until(all_converged)
 
     x_seq = scan(fn=step, outputs_info=pt.shape_padleft(x0), n_steps=max_iter, return_updates=False)
 
