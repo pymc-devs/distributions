@@ -105,7 +105,7 @@ def logsf(x, N, k, n):
 def ppf(q, N, k, n):
     lower = _support_lower(N, k, n)
     upper = _support_upper(N, k, n)
-    return find_ppf_discrete(q, lower, upper, cdf, N, k, n)
+    return find_ppf_discrete(q, mean(N, k, n), lower, upper, cdf, pdf, N, k, n)
 
 
 def isf(q, N, k, n):

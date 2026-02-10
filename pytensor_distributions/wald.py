@@ -60,7 +60,7 @@ def pdf(x, mu, lam):
 
 def ppf(q, mu, lam):
     params = (mu, lam)
-    return find_ppf(q, 0, pt.inf, cdf, *params)
+    return find_ppf(q, mode(mu, lam), 0, pt.inf, cdf, pdf, *params)
 
 
 def sf(x, mu, lam):

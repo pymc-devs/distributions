@@ -86,7 +86,7 @@ def cdf(x, psi, mu):
 
 def ppf(q, psi, mu):
     params = (psi, mu)
-    return find_ppf_discrete(q, 0, pt.inf, cdf, *params)
+    return find_ppf_discrete(q, mean(1, mu), 0, pt.inf, cdf, pdf, *params)
 
 
 def sf(x, psi, mu):

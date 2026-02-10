@@ -14,7 +14,7 @@ from tests.helper_scipy import run_distribution_tests
         # alpha > 1 and beta > 1: unique mode exists
         ([10, 2.0, 3.0], {"n": 10, "a": 2.0, "b": 3.0}, False),
         # alpha = beta = 1: uniform, mode not unique
-        ([5, 1.0, 1.0], {"n": 5, "a": 1.0, "b": 1.0}, True),
+        ([6, 1.0, 1.0], {"n": 6, "a": 1.0, "b": 1.0}, True),
         # alpha < 1 and beta < 1: U-shaped, mode not unique
         ([20, 0.5, 0.5], {"n": 20, "a": 0.5, "b": 0.5}, True),
         # alpha > 1 and beta > 1: unique mode exists

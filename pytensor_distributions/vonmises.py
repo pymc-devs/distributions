@@ -1,7 +1,7 @@
 import pytensor.tensor as pt
 
 from pytensor_distributions.helper import von_mises_cdf
-from pytensor_distributions.optimization import von_mises_ppf
+from pytensor_distributions.optimization import find_ppf
 
 
 def mean(mu, kappa):
@@ -74,4 +74,4 @@ def isf(q, mu, kappa):
 
 
 def ppf(q, mu, kappa):
-    return von_mises_ppf(q, mu, kappa, von_mises_cdf, pdf)
+    return find_ppf(q, mean(mu, kappa), -pt.pi, pt.pi, von_mises_cdf, pdf, mu, kappa)
