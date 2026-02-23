@@ -210,3 +210,67 @@ class TestBatchedMeanModeMedian:
         result = MatrixNormal.mean(pt.constant(M0), pt.constant(U0), pt.constant(V0))
         actual = result.eval()
         assert_allclose(actual, M0)
+
+    def test_mode_broadcasts(self):
+        rowcovs = np.array([np.eye(2), 2 * np.eye(2)])
+        actual = MatrixNormal.mode(pt.constant(M0), pt.constant(rowcovs), pt.constant(V0)).eval()
+        assert actual.shape == (2, 2, 2)
+
+    def test_median_broadcasts(self):
+        rowcovs = np.array([np.eye(2), 2 * np.eye(2)])
+        actual = MatrixNormal.median(pt.constant(M0), pt.constant(rowcovs), pt.constant(V0)).eval()
+        assert actual.shape == (2, 2, 2)
+
+
+class TestBatchedOtherFunctions:
+    """Test remaining functions with batched inputs."""
+
+    def test_var_batched_colcov(self):
+        colcovs = np.array([np.eye(2), 3 * np.eye(2)])
+        actual = MatrixNormal.var(pt.constant(M0), pt.constant(U0), pt.constant(colcovs)).eval()
+        assert actual.shape == (2, 2, 2)
+        for i in range(2):
+            expected = np.outer(np.diag(U0), np.diag(colcovs[i]))
+            assert_allclose(actual[i], expected, rtol=1e-10)
+
+    def test_std_batched(self):
+        rowcovs = np.array([np.eye(2), 2 * np.eye(2)])
+        actual = MatrixNormal.std(pt.constant(M0), pt.constant(rowcovs), pt.constant(V0)).eval()
+        assert actual.shape == (2, 2, 2)
+        var_result = MatrixNormal.var(pt.constant(M0), pt.constant(rowcovs), pt.constant(V0)).eval()
+        assert_allclose(actual, np.sqrt(var_result), rtol=1e-10)
+
+    def test_skewness_batched(self):
+        rowcovs = np.array([np.eye(2), 2 * np.eye(2)])
+        actual = MatrixNormal.skewness(
+            pt.constant(M0), pt.constant(rowcovs), pt.constant(V0)
+        ).eval()
+        assert actual.shape == (2, 2, 2)
+        assert_allclose(actual, 0)
+
+    def test_kurtosis_batched(self):
+        rowcovs = np.array([np.eye(2), 2 * np.eye(2)])
+        actual = MatrixNormal.kurtosis(
+            pt.constant(M0), pt.constant(rowcovs), pt.constant(V0)
+        ).eval()
+        assert actual.shape == (2, 2, 2)
+        assert_allclose(actual, 0)
+
+    def test_entropy_batched(self):
+        rowcovs = np.array([U0, 2 * np.eye(2)])
+        actual = MatrixNormal.entropy(pt.constant(M0), pt.constant(rowcovs), pt.constant(V0)).eval()
+        assert actual.shape == (2,)
+        for i in range(2):
+            expected = scipy_matrix_normal(mean=M0, rowcov=rowcovs[i], colcov=V0).entropy()
+            assert_allclose(actual[i], expected, rtol=1e-5)
+
+    def test_logpdf_batched_params(self):
+        X = M0 + 0.1
+        rowcovs = np.array([U0, 2 * np.eye(2)])
+        actual = MatrixNormal.logpdf(
+            pt.constant(X), pt.constant(M0), pt.constant(rowcovs), pt.constant(V0)
+        ).eval()
+        assert actual.shape == (2,)
+        for i in range(2):
+            expected = scipy_matrix_normal(mean=M0, rowcov=rowcovs[i], colcov=V0).logpdf(X)
+            assert_allclose(actual[i], expected, rtol=1e-5)
