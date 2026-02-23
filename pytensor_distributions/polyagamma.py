@@ -197,11 +197,7 @@ def rvs(h, z, size=None, random_state=None):
     else:
         gamma_size = (K, *size)
 
-    out = pt.random.gamma(h, scale=1.0, size=gamma_size, rng=random_state)
-    if random_state is not None:
-        _next_rng, gamma_draws = out.owner.outputs
-    else:
-        gamma_draws = out
+    gamma_draws = pt.random.gamma(h, scale=1.0, size=gamma_size, rng=random_state)
 
     z2_term = z**2 / (4 * pt.pi**2)
     k_bc = k.reshape((-1,) + (1,) * (gamma_draws.ndim - 1))

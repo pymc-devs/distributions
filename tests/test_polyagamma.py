@@ -1,11 +1,4 @@
-"""Test PolyaGamma distribution against empirical samples.
-
-Uses targeted tests instead of run_empirical_tests because the PolyaGamma CDF
-is computed via numerical integration (500-point quadrature with 20-term series),
-making it ~2ms per point. The generic helper calls CDF on the full sample array
-multiple times, which is prohibitively slow. PPF tests are marked slow because
-the scan-based Newton-Raphson solver has ~10s of PyTensor overhead per call.
-"""
+"""Test PolyaGamma distribution against empirical samples."""
 
 import numpy as np
 import pytensor.tensor as pt
