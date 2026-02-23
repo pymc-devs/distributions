@@ -10,16 +10,27 @@ from pytensor_distributions.mvnormal import _logdet_from_cholesky
 solve_lower = partial(solve_triangular, lower=True)
 
 
+def _broadcast_mu(mu, rowcov, colcov):
+    """Broadcast mu to the output shape implied by all parameters."""
+    mu = pt.as_tensor(mu)
+    rowcov = pt.as_tensor(rowcov)
+    colcov = pt.as_tensor(colcov)
+    # Use zero-addition to trigger automatic broadcasting across batch dims
+    row_zeros = pt.zeros(rowcov.shape[:-1])  # (..., m)
+    col_zeros = pt.zeros(colcov.shape[:-1])  # (..., n)
+    return mu + row_zeros[..., :, None] * col_zeros[..., None, :]
+
+
 def mean(mu, rowcov, colcov):
-    return pt.as_tensor(mu)
+    return _broadcast_mu(mu, rowcov, colcov)
 
 
 def mode(mu, rowcov, colcov):
-    return pt.as_tensor(mu)
+    return _broadcast_mu(mu, rowcov, colcov)
 
 
 def median(mu, rowcov, colcov):
-    return pt.as_tensor(mu)
+    return _broadcast_mu(mu, rowcov, colcov)
 
 
 def var(mu, rowcov, colcov):
@@ -27,7 +38,7 @@ def var(mu, rowcov, colcov):
     colcov = pt.as_tensor(colcov)
     row_diag = pt.diagonal(rowcov, axis1=-2, axis2=-1)
     col_diag = pt.diagonal(colcov, axis1=-2, axis2=-1)
-    return pt.outer(row_diag, col_diag)
+    return row_diag[..., :, None] * col_diag[..., None, :]
 
 
 def std(mu, rowcov, colcov):
@@ -35,11 +46,11 @@ def std(mu, rowcov, colcov):
 
 
 def skewness(mu, rowcov, colcov):
-    return pt.zeros_like(pt.as_tensor(mu))
+    return pt.zeros_like(_broadcast_mu(mu, rowcov, colcov))
 
 
 def kurtosis(mu, rowcov, colcov):
-    return pt.zeros_like(pt.as_tensor(mu))
+    return pt.zeros_like(_broadcast_mu(mu, rowcov, colcov))
 
 
 def entropy(mu, rowcov, colcov):
@@ -74,9 +85,9 @@ def logpdf(X, mu, rowcov, colcov):
 
     # Compute tr[V^-1 (X-M)^T U^-1 (X-M)] via Cholesky solves
     # Using vec identity: quadform = ||L_U^-1 delta L_V^-T||^2_F
-    Y = solve_lower(chol_row, delta)  # L_U^-1 delta, shape (m, n)
-    Z = solve_lower(chol_col, Y.T)  # L_V^-1 (L_U^-1 delta)^T, shape (n, m)
-    quadform = pt.sum(Z**2)
+    Y = solve_lower(chol_row, delta)  # L_U^-1 delta, shape (..., m, n)
+    Z = solve_lower(chol_col, pt.swapaxes(Y, -1, -2))  # L_V^-1 (L_U^-1 delta)^T, shape (..., n, m)
+    quadform = pt.sum(Z**2, axis=(-2, -1))
 
     log_norm = 0.5 * mn * pt.log(2 * pt.pi) + 0.5 * n * logdet_row + 0.5 * m * logdet_col
 
@@ -92,15 +103,22 @@ def rvs(mu, rowcov, colcov, size=None, random_state=None):
     rowcov = pt.as_tensor(rowcov)
     colcov = pt.as_tensor(colcov)
 
-    m = mu.shape[-2]
-    n = mu.shape[-1]
-
     L_row = pt.linalg.cholesky(rowcov, lower=True)
     L_col = pt.linalg.cholesky(colcov, lower=True)
 
     if size is None:
-        Z = pt.random.normal(0, 1, size=(m, n), rng=random_state)
-        return mu + L_row @ Z @ L_col.T
+        size = ()
+    elif not isinstance(size, tuple):
+        size = (size,)
+
+    # Get the broadcast output shape from parameters
+    target = _broadcast_mu(mu, rowcov, colcov)  # (..., m, n)
+    base_shape = target.shape  # symbolic shape vector
+
+    if size:
+        full_shape = pt.concatenate([pt.as_tensor(size), base_shape])
     else:
-        Z = pt.random.normal(0, 1, size=(size, m, n), rng=random_state)
-        return mu + L_row @ Z @ L_col.T
+        full_shape = base_shape
+
+    Z = pt.random.normal(0, 1, size=full_shape, rng=random_state)
+    return target + L_row @ Z @ pt.swapaxes(L_col, -1, -2)
