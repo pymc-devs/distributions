@@ -1,3 +1,16 @@
+<a id="v0.1.3"></a>
+# [v0.1.3](https://github.com/pymc-devs/pytensor-distributions/releases/tag/v0.1.3) - 2026-03-02
+
+## What's Changed
+* Add PolyGamma distribution by [@fonnesbeck](https://github.com/fonnesbeck) in [#49](https://github.com/pymc-devs/pytensor-distributions/pull/49)
+* Add MatrixNormal distribution by [@fonnesbeck](https://github.com/fonnesbeck) in [#50](https://github.com/pymc-devs/pytensor-distributions/pull/50)
+* Update gamma rvs method to use scale by [@aloctavodia](https://github.com/aloctavodia) in [#48](https://github.com/pymc-devs/pytensor-distributions/pull/48)
+
+**Full Changelog**: https://github.com/pymc-devs/pytensor-distributions/compare/v0.1.2...v0.1.3
+
+[Changes][v0.1.3]
+
+
 <a id="v0.1.2"></a>
 # [v0.1.2](https://github.com/pymc-devs/pytensor-distributions/releases/tag/v0.1.2) - 2026-02-10
 
@@ -70,6 +83,7 @@
 [Changes][v0.1.0]
 
 
+[v0.1.3]: https://github.com/pymc-devs/pytensor-distributions/compare/v0.1.2...v0.1.3
 [v0.1.2]: https://github.com/pymc-devs/pytensor-distributions/compare/v0.1.1...v0.1.2
 [v0.1.1]: https://github.com/pymc-devs/pytensor-distributions/compare/v0.1.0...v0.1.1
 [v0.1.0]: https://github.com/pymc-devs/pytensor-distributions/tree/v0.1.0
